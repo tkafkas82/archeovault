@@ -16,7 +16,6 @@ function getEditorEmails() {
   if (!sheet) {
     sheet = ss.insertSheet(EDITORS_SHEET);
     sheet.appendRow(['email']);
-    // Seed with the spreadsheet owner
     const owner = ss.getOwner().getEmail();
     sheet.appendRow([owner]);
   }
@@ -32,10 +31,8 @@ function verifyIdToken(idToken) {
         Utilities.base64DecodeWebSafe(idToken.split('.')[1])
       ).getDataAsString()
     );
-    // Check expiration
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp && payload.exp < now) return null;
-    // Check issuer
     if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') return null;
     return {
       email: (payload.email || '').toLowerCase(),
@@ -70,12 +67,20 @@ function getSheet(name) {
   if (!sheet) {
     sheet = ss.insertSheet(name);
     if (name === CATEGORIES_SHEET) {
-      sheet.appendRow(['id', 'name']);
+      sheet.appendRow(['id', 'name', 'parentId']);
     } else if (name === ITEMS_SHEET) {
       sheet.appendRow(['id', 'name', 'category', 'location', 'description', 'photos', 'createdAt', 'updatedAt']);
     }
   }
   return sheet;
+}
+
+function ensureCategoryParentIdColumn(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf('parentId') === -1) {
+    const col = headers.length + 1;
+    sheet.getRange(1, col).setValue('parentId');
+  }
 }
 
 function jsonResponse(data) {
@@ -90,7 +95,7 @@ function sheetToObjects(sheet) {
   const headers = data[0];
   return data.slice(1).map(row => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = row[i]; });
+    headers.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
     return obj;
   });
 }
@@ -98,9 +103,33 @@ function sheetToObjects(sheet) {
 function findRowById(sheet, id) {
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === id) return i + 1; // 1-based row number
+    if (data[i][0] === id) return i + 1;
   }
   return -1;
+}
+
+function getParentIdColIndex(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  return headers.indexOf('parentId') + 1;
+}
+
+function getCategoryFullPath(catName, allCategories) {
+  return catName;
+}
+
+function getDescendantNames(catId, allCategories) {
+  var names = [];
+  var queue = [catId];
+  while (queue.length > 0) {
+    var current = queue.shift();
+    for (var i = 0; i < allCategories.length; i++) {
+      if (String(allCategories[i].parentId) === String(current)) {
+        names.push(allCategories[i].name);
+        queue.push(allCategories[i].id);
+      }
+    }
+  }
+  return names;
 }
 
 // ── GET handler (public — no auth required) ─────────────────
@@ -110,8 +139,11 @@ function doGet(e) {
 
   try {
     switch (action) {
-      case 'getCategories':
-        return jsonResponse({ success: true, categories: sheetToObjects(getSheet(CATEGORIES_SHEET)) });
+      case 'getCategories': {
+        const sheet = getSheet(CATEGORIES_SHEET);
+        ensureCategoryParentIdColumn(sheet);
+        return jsonResponse({ success: true, categories: sheetToObjects(sheet) });
+      }
 
       case 'getItems': {
         let items = sheetToObjects(getSheet(ITEMS_SHEET));
@@ -132,7 +164,9 @@ function doGet(e) {
       }
 
       case 'exportAll': {
-        const categories = sheetToObjects(getSheet(CATEGORIES_SHEET));
+        const catSheet = getSheet(CATEGORIES_SHEET);
+        ensureCategoryParentIdColumn(catSheet);
+        const categories = sheetToObjects(catSheet);
         const items = sheetToObjects(getSheet(ITEMS_SHEET));
         return jsonResponse({ success: true, categories: categories, items: items });
       }
@@ -160,7 +194,6 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents);
     const action = body.action || '';
 
-    // All POST actions require editor access
     const auth = requireEditor(body);
     if (!auth.ok) {
       return jsonResponse({ success: false, error: auth.error, message: auth.message });
@@ -172,13 +205,16 @@ function doPost(e) {
 
       case 'addCategory': {
         const sheet = getSheet(CATEGORIES_SHEET);
+        ensureCategoryParentIdColumn(sheet);
         const id = Utilities.getUuid();
-        sheet.appendRow([id, body.name]);
-        return jsonResponse({ success: true, category: { id: id, name: body.name } });
+        const parentId = body.parentId || '';
+        sheet.appendRow([id, body.name, parentId]);
+        return jsonResponse({ success: true, category: { id: id, name: body.name, parentId: parentId } });
       }
 
       case 'renameCategory': {
         const sheet = getSheet(CATEGORIES_SHEET);
+        ensureCategoryParentIdColumn(sheet);
         const row = findRowById(sheet, body.id);
         if (row === -1) return jsonResponse({ success: false, error: 'Category not found' });
         const oldName = sheet.getRange(row, 2).getValue();
@@ -195,31 +231,57 @@ function doPost(e) {
 
       case 'deleteCategory': {
         const sheet = getSheet(CATEGORIES_SHEET);
+        ensureCategoryParentIdColumn(sheet);
         const row = findRowById(sheet, body.id);
         if (row === -1) return jsonResponse({ success: false, error: 'Category not found' });
         const catName = sheet.getRange(row, 2).getValue();
+        const allCats = sheetToObjects(sheet);
+        var descendantNames = getDescendantNames(body.id, allCats);
+        var allNamesToDelete = [catName].concat(descendantNames);
         const itemsSheet = getSheet(ITEMS_SHEET);
         const itemData = itemsSheet.getDataRange().getValues();
-        const itemCount = itemData.slice(1).filter(r => r[2] === catName).length;
+        var itemCount = 0;
+        for (var i = 1; i < itemData.length; i++) {
+          if (allNamesToDelete.indexOf(itemData[i][2]) !== -1) itemCount++;
+        }
         if (itemCount > 0 && !body.force) {
           return jsonResponse({ success: false, error: 'HAS_ITEMS', itemCount: itemCount, categoryName: catName });
         }
         if (body.force && body.deleteItems) {
-          for (let i = itemData.length - 1; i >= 1; i--) {
-            if (itemData[i][2] === catName) {
+          for (var i = itemData.length - 1; i >= 1; i--) {
+            if (allNamesToDelete.indexOf(itemData[i][2]) !== -1) {
               itemsSheet.deleteRow(i + 1);
             }
           }
         }
         if (body.force && body.reassignTo) {
-          for (let i = 1; i < itemData.length; i++) {
-            if (itemData[i][2] === catName) {
+          for (var i = 1; i < itemData.length; i++) {
+            if (allNamesToDelete.indexOf(itemData[i][2]) !== -1) {
               itemsSheet.getRange(i + 1, 3).setValue(body.reassignTo);
               itemsSheet.getRange(i + 1, 8).setValue(new Date().toISOString());
             }
           }
         }
-        sheet.deleteRow(row);
+        // Delete descendants first (reverse order to keep row indices valid)
+        var descIds = [];
+        var queue = [body.id];
+        while (queue.length > 0) {
+          var cur = queue.shift();
+          for (var j = 0; j < allCats.length; j++) {
+            if (String(allCats[j].parentId) === String(cur)) {
+              descIds.push(allCats[j].id);
+              queue.push(allCats[j].id);
+            }
+          }
+        }
+        var allIdsToDelete = descIds.concat([body.id]);
+        // Delete from bottom up
+        var catData = sheet.getDataRange().getValues();
+        for (var i = catData.length - 1; i >= 1; i--) {
+          if (allIdsToDelete.indexOf(catData[i][0]) !== -1) {
+            sheet.deleteRow(i + 1);
+          }
+        }
         return jsonResponse({ success: true });
       }
 
@@ -285,8 +347,8 @@ function doPost(e) {
         if (body.categories) {
           const catSheet = getSheet(CATEGORIES_SHEET);
           catSheet.clear();
-          catSheet.appendRow(['id', 'name']);
-          body.categories.forEach(c => catSheet.appendRow([c.id, c.name]));
+          catSheet.appendRow(['id', 'name', 'parentId']);
+          body.categories.forEach(c => catSheet.appendRow([c.id, c.name, c.parentId || '']));
         }
         if (body.items) {
           const itemSheet = getSheet(ITEMS_SHEET);

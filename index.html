@@ -103,6 +103,7 @@ body {
   border: 1px solid var(--border);
 }
 .btn-outline:hover { background: var(--bg); }
+.btn-sm { padding: 4px 10px; font-size: 0.78em; }
 
 /* ── Auth UI ───────────────────────────────────────────── */
 .auth-area { display: flex; align-items: center; gap: 8px; }
@@ -581,6 +582,9 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
     <div class="modal-body">
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <input type="text" id="newCatName" placeholder="Νέα κατηγορία..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9em;background:var(--bg-input)">
+        <select id="newCatParent" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85em;background:var(--bg-input);max-width:160px">
+          <option value="">Γονική: (κανένα)</option>
+        </select>
         <button class="btn btn-primary" onclick="addCategory()">Προσθήκη</button>
       </div>
       <ul class="cat-list" id="catList"></ul>
@@ -634,9 +638,50 @@ let moveItemId = null;
 let authUser = null;   // { email, name, picture, idToken }
 let isEditorUser = false;
 
+function saveAuthToStorage() {
+  if (authUser) {
+    localStorage.setItem('archeovault_auth', JSON.stringify(authUser));
+    localStorage.setItem('archeovault_isEditor', isEditorUser ? '1' : '0');
+  }
+}
+
+function clearAuthFromStorage() {
+  localStorage.removeItem('archeovault_auth');
+  localStorage.removeItem('archeovault_isEditor');
+}
+
+function restoreAuthFromStorage() {
+  try {
+    const saved = localStorage.getItem('archeovault_auth');
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!parsed || !parsed.idToken || !parsed.email) return false;
+    authUser = parsed;
+    isEditorUser = localStorage.getItem('archeovault_isEditor') === '1';
+    updateAuthUI();
+    apiGet({ action: 'checkAccess', token: authUser.idToken }).then(function(data) {
+      if (data.isEditor !== undefined) {
+        isEditorUser = data.isEditor;
+        updateAuthUI();
+        saveAuthToStorage();
+      }
+    }).catch(function() {
+      authUser = null;
+      isEditorUser = false;
+      clearAuthFromStorage();
+      updateAuthUI();
+      initGoogleSignIn();
+    });
+    return true;
+  } catch (e) {
+    clearAuthFromStorage();
+    return false;
+  }
+}
+
 function handleCredentialResponse(response) {
-  const idToken = response.credential;
-  const payload = JSON.parse(atob(idToken.split('.')[1]));
+  var idToken = response.credential;
+  var payload = JSON.parse(atob(idToken.split('.')[1]));
   authUser = {
     email: payload.email,
     name: payload.name || payload.email,
@@ -644,24 +689,26 @@ function handleCredentialResponse(response) {
     idToken: idToken
   };
 
-  // Check editor access with backend
-  apiGet({ action: 'checkAccess', token: idToken }).then(data => {
+  apiGet({ action: 'checkAccess', token: idToken }).then(function(data) {
     isEditorUser = data.isEditor || false;
     updateAuthUI();
+    saveAuthToStorage();
     if (isEditorUser) {
       showToast('Σύνδεση ως editor: ' + authUser.email);
     } else {
       showToast('Σύνδεση (μόνο ανάγνωση): ' + authUser.email);
     }
-  }).catch(() => {
+  }).catch(function() {
     isEditorUser = false;
     updateAuthUI();
+    saveAuthToStorage();
   });
 }
 
 function signOut() {
   authUser = null;
   isEditorUser = false;
+  clearAuthFromStorage();
   updateAuthUI();
   google.accounts.id.disableAutoSelect();
   initGoogleSignIn();
@@ -669,15 +716,15 @@ function signOut() {
 }
 
 function updateAuthUI() {
-  const signInBtn = document.getElementById('googleSignInBtn');
-  const userChip = document.getElementById('userChip');
+  var signInBtn = document.getElementById('googleSignInBtn');
+  var userChip = document.getElementById('userChip');
 
   if (authUser) {
     signInBtn.style.display = 'none';
-    const imgHtml = authUser.picture
+    var imgHtml = authUser.picture
       ? '<img src="' + authUser.picture + '" alt="" referrerpolicy="no-referrer">'
       : '';
-    const badgeHtml = isEditorUser
+    var badgeHtml = isEditorUser
       ? '<span class="editor-badge">Editor</span>'
       : '<span class="readonly-badge">Read-only</span>';
     userChip.innerHTML =
@@ -693,8 +740,7 @@ function updateAuthUI() {
     userChip.innerHTML = '';
   }
 
-  // Show/hide editor-only elements
-  document.querySelectorAll('.editor-only').forEach(el => {
+  document.querySelectorAll('.editor-only').forEach(function(el) {
     el.style.display = isEditorUser ? '' : 'none';
   });
 }
@@ -712,23 +758,74 @@ function initGoogleSignIn() {
   );
 }
 
+// ── Category Tree Helpers ─────────────────────────────────
+
+function buildCategoryTree(cats) {
+  var map = {};
+  var roots = [];
+  cats.forEach(function(c) { map[c.id] = Object.assign({}, c, { children: [] }); });
+  cats.forEach(function(c) {
+    var parentId = String(c.parentId || '');
+    if (parentId && map[parentId]) {
+      map[parentId].children.push(map[c.id]);
+    } else {
+      roots.push(map[c.id]);
+    }
+  });
+  return roots;
+}
+
+function flattenTree(nodes, depth) {
+  var result = [];
+  nodes.forEach(function(node) {
+    result.push({ id: node.id, name: node.name, parentId: node.parentId, depth: depth || 0 });
+    if (node.children && node.children.length > 0) {
+      result = result.concat(flattenTree(node.children, (depth || 0) + 1));
+    }
+  });
+  return result;
+}
+
+function getCategoryAndDescendantNames(catName) {
+  var cat = categories.find(function(c) { return c.name === catName; });
+  if (!cat) return [catName];
+  var names = [catName];
+  var queue = [cat.id];
+  while (queue.length > 0) {
+    var current = queue.shift();
+    categories.forEach(function(c) {
+      if (String(c.parentId || '') === String(current)) {
+        names.push(c.name);
+        queue.push(c.id);
+      }
+    });
+  }
+  return names;
+}
+
+function getCategoryItemCount(catId) {
+  var cat = categories.find(function(c) { return c.id === catId; });
+  if (!cat) return 0;
+  return items.filter(function(it) { return it.category === cat.name; }).length;
+}
+
 // ── API Helpers ────────────────────────────────────────────
 
 function showSpinner() { document.getElementById('spinner').classList.add('active'); }
 function hideSpinner() { document.getElementById('spinner').classList.remove('active'); }
 
 function showToast(msg, isError) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast' + (isError ? ' error' : '') + ' active';
-  setTimeout(() => t.classList.remove('active'), 3000);
+  setTimeout(function() { t.classList.remove('active'); }, 3000);
 }
 
 async function apiGet(params) {
   if (!API_URL) throw new Error('API not configured');
-  const url = API_URL + '?' + new URLSearchParams(params).toString();
-  const resp = await fetch(url);
-  const data = await resp.json();
+  var url = API_URL + '?' + new URLSearchParams(params).toString();
+  var resp = await fetch(url);
+  var data = await resp.json();
   if (!data.success) throw new Error(data.error || 'Unknown error');
   return data;
 }
@@ -737,16 +834,17 @@ async function apiPost(body) {
   if (!API_URL) throw new Error('API not configured');
   if (!authUser || !isEditorUser) throw new Error('Απαιτείται σύνδεση με δικαίωμα επεξεργασίας.');
   body._idToken = authUser.idToken;
-  const resp = await fetch(API_URL, {
+  var resp = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body)
   });
-  const data = await resp.json();
+  var data = await resp.json();
   if (!data.success) {
     if (data.error === 'AUTH_REQUIRED' || data.error === 'INVALID_TOKEN') {
       authUser = null;
       isEditorUser = false;
+      clearAuthFromStorage();
       updateAuthUI();
       initGoogleSignIn();
       throw new Error('Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
@@ -763,7 +861,7 @@ async function apiPost(body) {
 
 function driveToDirectUrl(url) {
   if (!url) return '';
-  let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  var match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
   match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
@@ -775,12 +873,12 @@ function driveToDirectUrl(url) {
 async function loadAll() {
   showSpinner();
   try {
-    const [catData, itemData] = await Promise.all([
+    var results = await Promise.all([
       apiGet({ action: 'getCategories' }),
       apiGet({ action: 'getItems' })
     ]);
-    categories = catData.categories || [];
-    items = itemData.items || [];
+    categories = results[0].categories || [];
+    items = results[1].items || [];
     updateCategoryDropdowns();
     updateLocationDropdown();
     renderItems();
@@ -794,17 +892,19 @@ async function loadAll() {
 // ── Rendering ──────────────────────────────────────────────
 
 function renderItems() {
-  const container = document.getElementById('cardsContainer');
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const filterCat = document.getElementById('filterCategory').value;
-  const filterLoc = document.getElementById('filterLocation').value;
+  var container = document.getElementById('cardsContainer');
+  var search = document.getElementById('searchInput').value.toLowerCase();
+  var filterCat = document.getElementById('filterCategory').value;
+  var filterLoc = document.getElementById('filterLocation').value;
 
-  let filtered = items.filter(it => {
-    if (filterCat && it.category !== filterCat) return false;
+  var allowedCatNames = filterCat ? getCategoryAndDescendantNames(filterCat) : null;
+
+  var filtered = items.filter(function(it) {
+    if (allowedCatNames && allowedCatNames.indexOf(it.category) === -1) return false;
     if (filterLoc && it.location !== filterLoc) return false;
     if (search) {
-      const haystack = [it.name, it.category, it.location, it.description].join(' ').toLowerCase();
-      if (!haystack.includes(search)) return false;
+      var haystack = [it.name, it.category, it.location, it.description].join(' ').toLowerCase();
+      if (haystack.indexOf(search) === -1) return false;
     }
     return true;
   });
@@ -825,9 +925,9 @@ function renderItems() {
     return;
   }
 
-  container.innerHTML = filtered.map(it => {
-    const photos = (it.photos || '').split(',').filter(Boolean);
-    const thumbUrl = photos.length > 0 ? driveToDirectUrl(photos[0]) : '';
+  container.innerHTML = filtered.map(function(it) {
+    var photos = (it.photos || '').split(',').filter(Boolean);
+    var thumbUrl = photos.length > 0 ? driveToDirectUrl(photos[0]) : '';
     return '<div class="card" onclick="' + (isEditorUser ? 'openItemModal(\'' + it.id + '\')' : 'viewItemDetail(\'' + it.id + '\')') + '">' +
       '<div class="card-thumb">' +
         (thumbUrl
@@ -846,44 +946,64 @@ function renderItems() {
 }
 
 function escHtml(s) {
-  const d = document.createElement('div');
+  var d = document.createElement('div');
   d.textContent = s || '';
   return d.innerHTML;
 }
 
 function updateCategoryDropdowns() {
-  const filterSel = document.getElementById('filterCategory');
-  const itemSel = document.getElementById('itemCategory');
-  const currentFilter = filterSel.value;
+  var filterSel = document.getElementById('filterCategory');
+  var itemSel = document.getElementById('itemCategory');
+  var parentSel = document.getElementById('newCatParent');
+  var currentFilter = filterSel.value;
+
+  var tree = buildCategoryTree(categories);
+  var flat = flattenTree(tree, 0);
 
   filterSel.innerHTML = '<option value="">Όλες οι κατηγορίες</option>' +
-    categories.map(c => '<option value="' + escHtml(c.name) + '">' + escHtml(c.name) + '</option>').join('');
+    flat.map(function(c) {
+      var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+      return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
+    }).join('');
   filterSel.value = currentFilter;
 
   itemSel.innerHTML = '<option value="">-- Επιλέξτε --</option>' +
-    categories.map(c => '<option value="' + escHtml(c.name) + '">' + escHtml(c.name) + '</option>').join('');
+    flat.map(function(c) {
+      var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+      return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
+    }).join('');
+
+  if (parentSel) {
+    parentSel.innerHTML = '<option value="">Γονική: (κανένα)</option>' +
+      flat.map(function(c) {
+        var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+        return '<option value="' + escHtml(c.id) + '">' + indent + escHtml(c.name) + '</option>';
+      }).join('');
+  }
 }
 
 function updateLocationDropdown() {
-  const sel = document.getElementById('filterLocation');
-  const current = sel.value;
-  const locations = [...new Set(items.map(i => i.location).filter(Boolean))].sort();
+  var sel = document.getElementById('filterLocation');
+  var current = sel.value;
+  var locSet = {};
+  items.forEach(function(i) { if (i.location) locSet[i.location] = true; });
+  var locations = Object.keys(locSet).sort();
   sel.innerHTML = '<option value="">Όλες οι τοποθεσίες</option>' +
-    locations.map(l => '<option value="' + escHtml(l) + '">' + escHtml(l) + '</option>').join('');
+    locations.map(function(l) { return '<option value="' + escHtml(l) + '">' + escHtml(l) + '</option>'; }).join('');
   sel.value = current;
 }
 
 // ── View-only Item Detail ──────────────────────────────────
 
 function viewItemDetail(id) {
-  const item = items.find(i => i.id === id);
+  var item = items.find(function(i) { return i.id === id; });
   if (!item) return;
-  const photos = (item.photos || '').split(',').filter(Boolean);
-  const photosHtml = photos.length > 0
+  var photos = (item.photos || '').split(',').filter(Boolean);
+  var photosHtml = photos.length > 0
     ? '<div class="photo-gallery" style="margin-top:12px">' +
-        photos.map(url =>
-          '<div class="photo-item"><img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'"></div>'
-        ).join('') +
+        photos.map(function(url) {
+          return '<div class="photo-item"><img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'"></div>';
+        }).join('') +
       '</div>'
     : '';
   document.getElementById('confirmTitle').textContent = item.name;
@@ -903,10 +1023,10 @@ function viewItemDetail(id) {
 function openItemModal(id) {
   if (!isEditorUser) { showToast('Συνδεθείτε ως editor για επεξεργασία.', true); return; }
 
-  const modal = document.getElementById('itemModal');
-  const title = document.getElementById('itemModalTitle');
-  const delBtn = document.getElementById('deleteItemBtn');
-  const ts = document.getElementById('itemTimestamps');
+  var modal = document.getElementById('itemModal');
+  var title = document.getElementById('itemModalTitle');
+  var delBtn = document.getElementById('deleteItemBtn');
+  var ts = document.getElementById('itemTimestamps');
 
   document.getElementById('itemId').value = '';
   document.getElementById('itemName').value = '';
@@ -918,7 +1038,7 @@ function openItemModal(id) {
   updateCategoryDropdowns();
 
   if (id) {
-    const item = items.find(i => i.id === id);
+    var item = items.find(function(i) { return i.id === id; });
     if (!item) return;
     title.textContent = 'Επεξεργασία Αντικειμένου';
     document.getElementById('itemId').value = item.id;
@@ -943,18 +1063,18 @@ function openItemModal(id) {
 function formatDate(d) {
   if (!d) return '-';
   try {
-    const dt = new Date(d);
+    var dt = new Date(d);
     return dt.toLocaleDateString('el-GR') + ' ' + dt.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
-  } catch { return d; }
+  } catch (e) { return d; }
 }
 
 async function saveItem() {
-  const id = document.getElementById('itemId').value;
-  const name = document.getElementById('itemName').value.trim();
-  const category = document.getElementById('itemCategory').value;
-  const location = document.getElementById('itemLocation').value.trim();
-  const description = document.getElementById('itemDescription').value.trim();
-  const photos = currentPhotos.join(',');
+  var id = document.getElementById('itemId').value;
+  var name = document.getElementById('itemName').value.trim();
+  var category = document.getElementById('itemCategory').value;
+  var location = document.getElementById('itemLocation').value.trim();
+  var description = document.getElementById('itemDescription').value.trim();
+  var photos = currentPhotos.join(',');
 
   if (!name) { showToast('Παρακαλώ συμπληρώστε το όνομα.', true); return; }
   if (!category) { showToast('Παρακαλώ επιλέξτε κατηγορία.', true); return; }
@@ -962,10 +1082,10 @@ async function saveItem() {
   showSpinner();
   try {
     if (id) {
-      await apiPost({ action: 'updateItem', id, name, category, location, description, photos });
+      await apiPost({ action: 'updateItem', id: id, name: name, category: category, location: location, description: description, photos: photos });
       showToast('Το αντικείμενο ενημερώθηκε.');
     } else {
-      await apiPost({ action: 'addItem', name, category, location, description, photos });
+      await apiPost({ action: 'addItem', name: name, category: category, location: location, description: description, photos: photos });
       showToast('Το αντικείμενο προστέθηκε.');
     }
     closeModal('itemModal');
@@ -978,19 +1098,19 @@ async function saveItem() {
 }
 
 async function deleteCurrentItem() {
-  const id = document.getElementById('itemId').value;
+  var id = document.getElementById('itemId').value;
   if (!id) return;
-  const item = items.find(i => i.id === id);
+  var item = items.find(function(i) { return i.id === id; });
   showConfirm(
     'Διαγραφή Αντικειμένου',
     'Θέλετε σίγουρα να διαγράψετε το "' + (item ? item.name : '') + '";',
     [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: () => closeModal('confirmModal') },
-      { label: 'Διαγραφή', cls: 'btn-danger', action: async () => {
+      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: 'Διαγραφή', cls: 'btn-danger', action: async function() {
         closeModal('confirmModal');
         showSpinner();
         try {
-          await apiPost({ action: 'deleteItem', id });
+          await apiPost({ action: 'deleteItem', id: id });
           showToast('Το αντικείμενο διαγράφηκε.');
           closeModal('itemModal');
           await loadAll();
@@ -1005,8 +1125,8 @@ async function deleteCurrentItem() {
 // ── Photo Gallery ──────────────────────────────────────────
 
 function addPhotoLink() {
-  const input = document.getElementById('photoUrlInput');
-  const url = input.value.trim();
+  var input = document.getElementById('photoUrlInput');
+  var url = input.value.trim();
   if (!url) return;
   currentPhotos.push(url);
   input.value = '';
@@ -1019,23 +1139,23 @@ function removePhoto(idx) {
 }
 
 function renderPhotoGallery() {
-  const gallery = document.getElementById('photoGallery');
+  var gallery = document.getElementById('photoGallery');
   if (currentPhotos.length === 0) {
     gallery.innerHTML = '';
     return;
   }
-  gallery.innerHTML = currentPhotos.map((url, i) =>
-    '<div class="photo-item">' +
+  gallery.innerHTML = currentPhotos.map(function(url, i) {
+    return '<div class="photo-item">' +
       '<img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'">' +
       '<button class="remove-photo" onclick="event.stopPropagation();removePhoto(' + i + ')">✕</button>' +
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
 }
 
 // ── Move Item ──────────────────────────────────────────────
 
 function openMoveModal(id) {
-  const item = items.find(i => i.id === id);
+  var item = items.find(function(i) { return i.id === id; });
   if (!item) return;
   moveItemId = id;
   document.getElementById('moveItemName').textContent = item.name;
@@ -1045,7 +1165,7 @@ function openMoveModal(id) {
 }
 
 async function confirmMove() {
-  const newLoc = document.getElementById('moveNewLocation').value.trim();
+  var newLoc = document.getElementById('moveNewLocation').value.trim();
   if (!newLoc) { showToast('Παρακαλώ συμπληρώστε τοποθεσία.', true); return; }
   showSpinner();
   try {
@@ -1062,36 +1182,47 @@ async function confirmMove() {
 
 function openCategoriesModal() {
   if (!isEditorUser) { showToast('Συνδεθείτε ως editor για διαχείριση κατηγοριών.', true); return; }
+  updateCategoryDropdowns();
   renderCatList();
   document.getElementById('categoriesModal').classList.add('active');
 }
 
 function renderCatList() {
-  const list = document.getElementById('catList');
+  var list = document.getElementById('catList');
   if (categories.length === 0) {
     list.innerHTML = '<li style="color:var(--text-light);font-style:italic;padding:16px;text-align:center">Δεν υπάρχουν κατηγορίες</li>';
     return;
   }
-  list.innerHTML = categories.map(c => {
-    const count = items.filter(i => i.category === c.name).length;
-    return '<li>' +
-      '<div class="cat-info"><span>' + escHtml(c.name) + '</span><span class="cat-count">' + count + '</span></div>' +
+  var tree = buildCategoryTree(categories);
+  var flat = flattenTree(tree, 0);
+
+  list.innerHTML = flat.map(function(c) {
+    var count = getCategoryItemCount(c.id);
+    var indent = c.depth > 0 ? 'padding-left:' + (12 + c.depth * 24) + 'px;' : '';
+    var prefix = c.depth > 0 ? '<span style="color:var(--text-light);margin-right:4px">└</span>' : '';
+    var escapedName = escHtml(c.name).replace(/'/g, "\\'");
+    return '<li style="' + indent + '">' +
+      '<div class="cat-info">' + prefix + '<span>' + escHtml(c.name) + '</span><span class="cat-count">' + count + '</span></div>' +
       '<div class="cat-actions">' +
-        '<button title="Μετονομασία" onclick="renameCategory(\'' + c.id + '\',\'' + escHtml(c.name).replace(/'/g, "\\'") + '\')">✏️</button>' +
-        '<button title="Διαγραφή" onclick="deleteCategoryPrompt(\'' + c.id + '\',\'' + escHtml(c.name).replace(/'/g, "\\'") + '\',' + count + ')">🗑️</button>' +
+        '<button title="Προσθήκη υποκατηγορίας" onclick="addSubcategory(\'' + c.id + '\',\'' + escapedName + '\')">➕</button>' +
+        '<button title="Μετονομασία" onclick="renameCategory(\'' + c.id + '\',\'' + escapedName + '\')">✏️</button>' +
+        '<button title="Διαγραφή" onclick="deleteCategoryPrompt(\'' + c.id + '\',\'' + escapedName + '\',' + count + ')">🗑️</button>' +
       '</div>' +
     '</li>';
   }).join('');
 }
 
 async function addCategory() {
-  const input = document.getElementById('newCatName');
-  const name = input.value.trim();
+  var input = document.getElementById('newCatName');
+  var parentSel = document.getElementById('newCatParent');
+  var name = input.value.trim();
   if (!name) return;
+  var parentId = parentSel ? parentSel.value : '';
   showSpinner();
   try {
-    await apiPost({ action: 'addCategory', name });
+    await apiPost({ action: 'addCategory', name: name, parentId: parentId });
     input.value = '';
+    if (parentSel) parentSel.value = '';
     showToast('Η κατηγορία προστέθηκε.');
     await loadAll();
     renderCatList();
@@ -1100,29 +1231,40 @@ async function addCategory() {
   } finally { hideSpinner(); }
 }
 
+function addSubcategory(parentId, parentName) {
+  var name = prompt('Νέα υποκατηγορία στο "' + parentName + '":');
+  if (!name || !name.trim()) return;
+  showSpinner();
+  apiPost({ action: 'addCategory', name: name.trim(), parentId: parentId })
+    .then(function() { showToast('Η υποκατηγορία προστέθηκε.'); return loadAll(); })
+    .then(function() { renderCatList(); updateCategoryDropdowns(); })
+    .catch(function(err) { showToast('Σφάλμα: ' + err.message, true); })
+    .finally(function() { hideSpinner(); });
+}
+
 function renameCategory(id, oldName) {
-  const newName = prompt('Νέο όνομα κατηγορίας:', oldName);
+  var newName = prompt('Νέο όνομα κατηγορίας:', oldName);
   if (!newName || newName.trim() === oldName) return;
   showSpinner();
-  apiPost({ action: 'renameCategory', id, name: newName.trim() })
-    .then(() => { showToast('Η κατηγορία μετονομάστηκε.'); return loadAll(); })
-    .then(() => renderCatList())
-    .catch(err => showToast('Σφάλμα: ' + err.message, true))
-    .finally(() => hideSpinner());
+  apiPost({ action: 'renameCategory', id: id, name: newName.trim() })
+    .then(function() { showToast('Η κατηγορία μετονομάστηκε.'); return loadAll(); })
+    .then(function() { renderCatList(); })
+    .catch(function(err) { showToast('Σφάλμα: ' + err.message, true); })
+    .finally(function() { hideSpinner(); });
 }
 
 function deleteCategoryPrompt(id, name, count) {
   if (count > 0) {
-    const otherCats = categories.filter(c => c.id !== id);
-    let buttons = [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: () => closeModal('confirmModal') },
-      { label: 'Διαγραφή όλων', cls: 'btn-danger', action: () => forceDeleteCategory(id, true, null) }
+    var otherCats = categories.filter(function(c) { return c.id !== id; });
+    var buttons = [
+      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: 'Διαγραφή όλων', cls: 'btn-danger', action: function() { forceDeleteCategory(id, true, null); } }
     ];
     if (otherCats.length > 0) {
       buttons.splice(1, 0, {
-        label: 'Μετακίνηση σε άλλη', cls: 'btn-green', action: () => {
-          const target = prompt('Μετακίνηση ' + count + ' αντικειμένων σε ποια κατηγορία;\n\nΔιαθέσιμες:\n' +
-            otherCats.map(c => '  - ' + c.name).join('\n'));
+        label: 'Μετακίνηση σε άλλη', cls: 'btn-green', action: function() {
+          var target = prompt('Μετακίνηση ' + count + ' αντικειμένων σε ποια κατηγορία;\n\nΔιαθέσιμες:\n' +
+            otherCats.map(function(c) { return '  - ' + c.name; }).join('\n'));
           if (target) forceDeleteCategory(id, false, target.trim());
         }
       });
@@ -1137,8 +1279,8 @@ function deleteCategoryPrompt(id, name, count) {
       'Διαγραφή Κατηγορίας',
       'Θέλετε να διαγράψετε την κατηγορία "' + name + '";',
       [
-        { label: 'Ακύρωση', cls: 'btn-outline', action: () => closeModal('confirmModal') },
-        { label: 'Διαγραφή', cls: 'btn-danger', action: () => forceDeleteCategory(id, false, null) }
+        { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+        { label: 'Διαγραφή', cls: 'btn-danger', action: function() { forceDeleteCategory(id, false, null); } }
       ]
     );
   }
@@ -1148,7 +1290,7 @@ async function forceDeleteCategory(id, deleteItems, reassignTo) {
   closeModal('confirmModal');
   showSpinner();
   try {
-    const body = { action: 'deleteCategory', id, force: true };
+    var body = { action: 'deleteCategory', id: id, force: true };
     if (deleteItems) body.deleteItems = true;
     if (reassignTo) body.reassignTo = reassignTo;
     await apiPost(body);
@@ -1165,10 +1307,10 @@ async function forceDeleteCategory(id, deleteItems, reassignTo) {
 async function exportData() {
   showSpinner();
   try {
-    const data = await apiGet({ action: 'exportAll' });
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var data = await apiGet({ action: 'exportAll' });
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
     a.download = 'archeovault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
@@ -1180,20 +1322,20 @@ async function exportData() {
 }
 
 async function importData() {
-  const file = document.getElementById('importFile').files[0];
+  var file = document.getElementById('importFile').files[0];
   if (!file) return;
 
   showConfirm(
     'Εισαγωγή Δεδομένων',
     'Αυτή η ενέργεια θα αντικαταστήσει ΟΛΑ τα υπάρχοντα δεδομένα. Συνέχεια;',
     [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: () => { closeModal('confirmModal'); document.getElementById('importFile').value = ''; } },
-      { label: 'Εισαγωγή', cls: 'btn-danger', action: async () => {
+      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); document.getElementById('importFile').value = ''; } },
+      { label: 'Εισαγωγή', cls: 'btn-danger', action: async function() {
         closeModal('confirmModal');
         showSpinner();
         try {
-          const text = await file.text();
-          const data = JSON.parse(text);
+          var text = await file.text();
+          var data = JSON.parse(text);
           await apiPost({ action: 'importAll', categories: data.categories, items: data.items });
           showToast('Τα δεδομένα εισήχθησαν.');
           closeModal('exportModal');
@@ -1214,10 +1356,10 @@ async function importData() {
 function showConfirm(title, message, buttons) {
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmMessage').textContent = message;
-  document.getElementById('confirmFooter').innerHTML = buttons.map((b, i) =>
-    '<button class="btn ' + b.cls + '" id="confirmBtn' + i + '">' + b.label + '</button>'
-  ).join('');
-  buttons.forEach((b, i) => {
+  document.getElementById('confirmFooter').innerHTML = buttons.map(function(b, i) {
+    return '<button class="btn ' + b.cls + '" id="confirmBtn' + i + '">' + b.label + '</button>';
+  }).join('');
+  buttons.forEach(function(b, i) {
     document.getElementById('confirmBtn' + i).onclick = b.action;
   });
   document.getElementById('confirmModal').classList.add('active');
@@ -1234,16 +1376,16 @@ function openExportModal() {
 }
 
 // Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
     if (e.target === overlay) overlay.classList.remove('active');
   });
 });
 
 // ── Search ─────────────────────────────────────────────────
 
-let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', () => {
+var searchTimeout;
+document.getElementById('searchInput').addEventListener('input', function() {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(renderItems, 200);
 });
@@ -1257,11 +1399,16 @@ if (API_URL) {
   loadAll();
 }
 
-window.addEventListener('load', () => {
-  if (GOOGLE_CLIENT_ID) initGoogleSignIn();
+window.addEventListener('load', function() {
+  var restored = restoreAuthFromStorage();
+  if (GOOGLE_CLIENT_ID && !restored) initGoogleSignIn();
+  if (GOOGLE_CLIENT_ID && restored) {
+    // Still initialize for the sign-in button (hidden but ready if session expires)
+    try { initGoogleSignIn(); } catch(e) {}
+  }
 
   // ── PWA: Inline manifest ──────────────────────────────────
-  const manifest = {
+  var manifest = {
     name: 'ArcheoVault — Αρχαιολογική Αποθήκη',
     short_name: 'ArcheoVault',
     start_url: './',
@@ -1275,18 +1422,18 @@ window.addEventListener('load', () => {
       purpose: 'any maskable'
     }]
   };
-  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-  const manifestUrl = URL.createObjectURL(manifestBlob);
-  const link = document.createElement('link');
+  var manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  var manifestUrl = URL.createObjectURL(manifestBlob);
+  var link = document.createElement('link');
   link.rel = 'manifest';
   link.href = manifestUrl;
   document.head.appendChild(link);
 
   // ── PWA: Service worker (minimal, enables install prompt) ──
   if ('serviceWorker' in navigator) {
-    const swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); })); });";
-    const swBlob = new Blob([swCode], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(swBlob);
+    var swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); })); });";
+    var swBlob = new Blob([swCode], { type: 'application/javascript' });
+    var swUrl = URL.createObjectURL(swBlob);
     navigator.serviceWorker.register(swUrl).catch(function() {});
   }
 });
