@@ -706,13 +706,23 @@ function handleCredentialResponse(response) {
 }
 
 function signOut() {
-  authUser = null;
-  isEditorUser = false;
-  clearAuthFromStorage();
-  updateAuthUI();
-  google.accounts.id.disableAutoSelect();
-  initGoogleSignIn();
-  showToast('Αποσυνδεθήκατε.');
+  showConfirm(
+    'Αποσύνδεση',
+    'Θέλετε σίγουρα να αποσυνδεθείτε;',
+    [
+      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: 'Αποσύνδεση', cls: 'btn-danger', action: function() {
+        closeModal('confirmModal');
+        authUser = null;
+        isEditorUser = false;
+        clearAuthFromStorage();
+        updateAuthUI();
+        google.accounts.id.disableAutoSelect();
+        initGoogleSignIn();
+        showToast('Αποσυνδεθήκατε.');
+      }}
+    ]
+  );
 }
 
 function updateAuthUI() {
