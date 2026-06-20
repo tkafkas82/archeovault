@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%236b4a30'/%3E%3Cstop offset='100%25' stop-color='%234a3020'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23bg)'/%3E%3Cpath d='M14 54 L14 28 Q14 12 32 9 Q50 12 50 28 L50 54' fill='none' stroke='%23e8c9a0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 22 Q26 22 26 24 L25 42 Q25 48 30 50 L29 52 Q28 53 30 54 L34 54 Q36 53 35 52 L34 50 Q39 48 39 42 L38 24 Q38 22 36 22 Z' fill='%23c0392b'/%3E%3Cpath d='M26 25 Q22 30 25 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M38 25 Q42 30 39 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='10' y1='54' x2='54' y2='54' stroke='%23e8c9a0' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>ArcheoVault — Αρχαιολογική Αποθήκη</title>
+<!-- PWA: iOS meta tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ArcheoVault">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%236b4a30'/%3E%3Cstop offset='100%25' stop-color='%234a3020'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='90' fill='url(%23b)'/%3E%3Cpath d='M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400' fill='none' stroke='%23e8c9a0' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z' fill='%23c0392b'/%3E%3Cpath d='M220 210 Q196 230 210 260' fill='none' stroke='%23c0392b' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M292 210 Q316 230 302 260' fill='none' stroke='%23c0392b' stroke-width='10' stroke-linecap='round'/%3E%3Cline x1='100' y1='400' x2='412' y2='400' stroke='%23e8c9a0' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#5c4033">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── CSS Variables ──────────────────────────────────────── */
@@ -1253,6 +1259,36 @@ if (API_URL) {
 
 window.addEventListener('load', () => {
   if (GOOGLE_CLIENT_ID) initGoogleSignIn();
+
+  // ── PWA: Inline manifest ──────────────────────────────────
+  const manifest = {
+    name: 'ArcheoVault — Αρχαιολογική Αποθήκη',
+    short_name: 'ArcheoVault',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#f5f0e8',
+    theme_color: '#5c4033',
+    icons: [{
+      src: 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Cdefs%3E%3ClinearGradient id=%27b%27 x1=%270%27 y1=%270%27 x2=%270%27 y2=%271%27%3E%3Cstop offset=%270%25%27 stop-color=%27%236b4a30%27/%3E%3Cstop offset=%27100%25%27 stop-color=%27%234a3020%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%27512%27 height=%27512%27 rx=%2790%27 fill=%27url(%23b)%27/%3E%3Cpath d=%27M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400%27 fill=%27none%27 stroke=%27%23e8c9a0%27 stroke-width=%2732%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z%27 fill=%27%23c0392b%27/%3E%3Cpath d=%27M220 210 Q196 230 210 260%27 fill=%27none%27 stroke=%27%23c0392b%27 stroke-width=%2710%27 stroke-linecap=%27round%27/%3E%3Cpath d=%27M292 210 Q316 230 302 260%27 fill=%27none%27 stroke=%27%23c0392b%27 stroke-width=%2710%27 stroke-linecap=%27round%27/%3E%3Cline x1=%27100%27 y1=%27400%27 x2=%27412%27 y2=%27400%27 stroke=%27%23e8c9a0%27 stroke-width=%2712%27 stroke-linecap=%27round%27/%3E%3C/svg%3E',
+      sizes: '512x512',
+      type: 'image/svg+xml',
+      purpose: 'any maskable'
+    }]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const manifestUrl = URL.createObjectURL(manifestBlob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestUrl;
+  document.head.appendChild(link);
+
+  // ── PWA: Service worker (minimal, enables install prompt) ──
+  if ('serviceWorker' in navigator) {
+    const swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); })); });";
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(function() {});
+  }
 });
 </script>
 </body>
