@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%236b4a30'/%3E%3Cstop offset='100%25' stop-color='%234a3020'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23bg)'/%3E%3Cpath d='M14 54 L14 28 Q14 12 32 9 Q50 12 50 28 L50 54' fill='none' stroke='%23e8c9a0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 22 Q26 22 26 24 L25 42 Q25 48 30 50 L29 52 Q28 53 30 54 L34 54 Q36 53 35 52 L34 50 Q39 48 39 42 L38 24 Q38 22 36 22 Z' fill='%23c0392b'/%3E%3Cpath d='M26 25 Q22 30 25 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M38 25 Q42 30 39 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='10' y1='54' x2='54' y2='54' stroke='%23e8c9a0' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>ArcheoVault — Αρχαιολογική Αποθήκη</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── CSS Variables ──────────────────────────────────────── */
 :root {
@@ -70,7 +71,7 @@ body {
 }
 .header-search::placeholder { color: rgba(255,255,255,0.5); }
 .header-search:focus { background: rgba(255,255,255,0.25); }
-.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .btn {
   padding: 8px 16px;
   border: none;
@@ -96,6 +97,43 @@ body {
   border: 1px solid var(--border);
 }
 .btn-outline:hover { background: var(--bg); }
+
+/* ── Auth UI ───────────────────────────────────────────── */
+.auth-area { display: flex; align-items: center; gap: 8px; }
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  font-size: 0.82em;
+  transition: background 0.15s;
+}
+.user-chip:hover { background: rgba(255,255,255,0.25); }
+.user-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+.user-chip .user-name { color: var(--text-inv); }
+.editor-badge {
+  background: var(--accent2);
+  color: #fff;
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
+.readonly-badge {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
 
 /* ── Filter Bar ─────────────────────────────────────────── */
 .filter-bar {
@@ -407,16 +445,18 @@ body {
   .header h1 { font-size: 1.1em; }
   .cards-container { padding: 12px; gap: 12px; grid-template-columns: 1fr; }
   .modal { margin: 10px; }
+  .user-chip .user-name { display: none; }
 }
 </style>
 </head>
 <body>
 
 <!-- ══════════════════════════════════════════════════════════
-     CONFIGURATION — Paste your Apps Script Web App URL below
+     CONFIGURATION
      ══════════════════════════════════════════════════════════ -->
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQiomp_cfbbLxR-_Fb9InbdSUWzEByIrnHIuISzz_fPzdqllVw/exec'; // <-- PASTE YOUR APPS SCRIPT WEB APP URL HERE
+const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQiomp_cfbbLxR-_Fb9InbdSUWzEByIrnHIuISzz_fPzdqllVw/exec';         // <-- PASTE YOUR APPS SCRIPT WEB APP URL HERE
+const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.googleusercontent.com'; // <-- PASTE YOUR GOOGLE CLOUD OAUTH CLIENT ID HERE
 </script>
 
 <!-- ── Loading Spinner ──────────────────────────────────── -->
@@ -427,7 +467,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQio
 
 <!-- ── Config Banner ─────────────────────────────────────── -->
 <div class="config-banner" id="configBanner" style="display:none">
-  Το API δεν έχει ρυθμιστεί. Ανοίξτε το αρχείο <code>index.html</code> και συμπληρώστε το <code>API_URL</code>.
+  Το API δεν έχει ρυθμιστεί. Ανοίξτε το αρχείο <code>index.html</code> και συμπληρώστε τα <code>API_URL</code> και <code>GOOGLE_CLIENT_ID</code>.
   Δείτε το αρχείο <code>SETUP.md</code> για οδηγίες.
 </div>
 
@@ -437,9 +477,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQio
   <h1>ArcheoVault</h1>
   <input type="text" class="header-search" id="searchInput" placeholder="Αναζήτηση αντικειμένων...">
   <div class="header-actions">
-    <button class="btn btn-primary" onclick="openItemModal()">+ Αντικείμενο</button>
-    <button class="btn btn-secondary" onclick="openCategoriesModal()">Κατηγορίες</button>
+    <button class="btn btn-primary editor-only" onclick="openItemModal()" style="display:none">+ Αντικείμενο</button>
+    <button class="btn btn-secondary editor-only" onclick="openCategoriesModal()" style="display:none">Κατηγορίες</button>
     <button class="btn btn-secondary" onclick="openExportModal()">Εξαγωγή / Εισαγωγή</button>
+    <div class="auth-area" id="authArea">
+      <div id="googleSignInBtn"></div>
+      <div id="userChip" style="display:none"></div>
+    </div>
   </div>
 </header>
 
@@ -547,7 +591,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQio
     </div>
     <div class="modal-body" style="text-align:center">
       <button class="btn btn-green" onclick="exportData()" style="width:100%;margin-bottom:12px;padding:14px">Εξαγωγή Δεδομένων (JSON)</button>
-      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+      <div class="editor-only" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;display:none">
         <p style="font-size:0.85em;color:var(--text-light);margin-bottom:8px">Εισαγωγή αντιγράφου ασφαλείας:</p>
         <input type="file" id="importFile" accept=".json" style="font-size:0.85em" onchange="importData()">
         <p style="font-size:0.78em;color:#c0392b;margin-top:8px">Προσοχή: Η εισαγωγή αντικαθιστά όλα τα υπάρχοντα δεδομένα.</p>
@@ -579,6 +623,89 @@ let items = [];
 let currentPhotos = [];
 let moveItemId = null;
 
+// ── Auth State ─────────────────────────────────────────────
+
+let authUser = null;   // { email, name, picture, idToken }
+let isEditorUser = false;
+
+function handleCredentialResponse(response) {
+  const idToken = response.credential;
+  const payload = JSON.parse(atob(idToken.split('.')[1]));
+  authUser = {
+    email: payload.email,
+    name: payload.name || payload.email,
+    picture: payload.picture || '',
+    idToken: idToken
+  };
+
+  // Check editor access with backend
+  apiGet({ action: 'checkAccess', token: idToken }).then(data => {
+    isEditorUser = data.isEditor || false;
+    updateAuthUI();
+    if (isEditorUser) {
+      showToast('Σύνδεση ως editor: ' + authUser.email);
+    } else {
+      showToast('Σύνδεση (μόνο ανάγνωση): ' + authUser.email);
+    }
+  }).catch(() => {
+    isEditorUser = false;
+    updateAuthUI();
+  });
+}
+
+function signOut() {
+  authUser = null;
+  isEditorUser = false;
+  updateAuthUI();
+  google.accounts.id.disableAutoSelect();
+  initGoogleSignIn();
+  showToast('Αποσυνδεθήκατε.');
+}
+
+function updateAuthUI() {
+  const signInBtn = document.getElementById('googleSignInBtn');
+  const userChip = document.getElementById('userChip');
+
+  if (authUser) {
+    signInBtn.style.display = 'none';
+    const imgHtml = authUser.picture
+      ? '<img src="' + authUser.picture + '" alt="" referrerpolicy="no-referrer">'
+      : '';
+    const badgeHtml = isEditorUser
+      ? '<span class="editor-badge">Editor</span>'
+      : '<span class="readonly-badge">Read-only</span>';
+    userChip.innerHTML =
+      '<div class="user-chip" onclick="signOut()" title="Κλικ για αποσύνδεση">' +
+        imgHtml +
+        '<span class="user-name">' + escHtml(authUser.name.split(' ')[0]) + '</span>' +
+        badgeHtml +
+      '</div>';
+    userChip.style.display = '';
+  } else {
+    signInBtn.style.display = '';
+    userChip.style.display = 'none';
+    userChip.innerHTML = '';
+  }
+
+  // Show/hide editor-only elements
+  document.querySelectorAll('.editor-only').forEach(el => {
+    el.style.display = isEditorUser ? '' : 'none';
+  });
+}
+
+function initGoogleSignIn() {
+  if (!GOOGLE_CLIENT_ID) return;
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: true
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('googleSignInBtn'),
+    { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin', locale: 'el' }
+  );
+}
+
 // ── API Helpers ────────────────────────────────────────────
 
 function showSpinner() { document.getElementById('spinner').classList.add('active'); }
@@ -602,13 +729,27 @@ async function apiGet(params) {
 
 async function apiPost(body) {
   if (!API_URL) throw new Error('API not configured');
+  if (!authUser || !isEditorUser) throw new Error('Απαιτείται σύνδεση με δικαίωμα επεξεργασίας.');
+  body._idToken = authUser.idToken;
   const resp = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body)
   });
   const data = await resp.json();
-  if (!data.success) throw new Error(data.error || 'Unknown error');
+  if (!data.success) {
+    if (data.error === 'AUTH_REQUIRED' || data.error === 'INVALID_TOKEN') {
+      authUser = null;
+      isEditorUser = false;
+      updateAuthUI();
+      initGoogleSignIn();
+      throw new Error('Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
+    }
+    if (data.error === 'NOT_EDITOR') {
+      throw new Error(data.message || 'Δεν έχετε δικαίωμα επεξεργασίας.');
+    }
+    throw new Error(data.error || 'Unknown error');
+  }
   return data;
 }
 
@@ -616,13 +757,10 @@ async function apiPost(body) {
 
 function driveToDirectUrl(url) {
   if (!url) return '';
-  // Handle /file/d/ID/... pattern
   let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
-  // Handle ?id=ID pattern
   match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
-  // Already a direct URL
   return url;
 }
 
@@ -674,7 +812,9 @@ function renderItems() {
     container.innerHTML = '<div class="empty-state">' +
       '<div class="icon">🏺</div>' +
       '<h2>' + (items.length === 0 ? 'Δεν υπάρχουν αντικείμενα' : 'Κανένα αποτέλεσμα') + '</h2>' +
-      '<p>' + (items.length === 0 ? 'Πατήστε "+ Αντικείμενο" για να ξεκινήσετε.' : 'Δοκιμάστε διαφορετικά φίλτρα.') + '</p>' +
+      '<p>' + (items.length === 0
+        ? (isEditorUser ? 'Πατήστε "+ Αντικείμενο" για να ξεκινήσετε.' : 'Συνδεθείτε ως editor για να προσθέσετε αντικείμενα.')
+        : 'Δοκιμάστε διαφορετικά φίλτρα.') + '</p>' +
       '</div>';
     return;
   }
@@ -682,7 +822,7 @@ function renderItems() {
   container.innerHTML = filtered.map(it => {
     const photos = (it.photos || '').split(',').filter(Boolean);
     const thumbUrl = photos.length > 0 ? driveToDirectUrl(photos[0]) : '';
-    return '<div class="card" onclick="openItemModal(\'' + it.id + '\')">' +
+    return '<div class="card" onclick="' + (isEditorUser ? 'openItemModal(\'' + it.id + '\')' : 'viewItemDetail(\'' + it.id + '\')') + '">' +
       '<div class="card-thumb">' +
         (thumbUrl
           ? '<img src="' + thumbUrl + '" alt="" onerror="this.parentElement.innerHTML=\'<span class=placeholder>🏺</span>\'">'
@@ -727,9 +867,36 @@ function updateLocationDropdown() {
   sel.value = current;
 }
 
+// ── View-only Item Detail ──────────────────────────────────
+
+function viewItemDetail(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const photos = (item.photos || '').split(',').filter(Boolean);
+  const photosHtml = photos.length > 0
+    ? '<div class="photo-gallery" style="margin-top:12px">' +
+        photos.map(url =>
+          '<div class="photo-item"><img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'"></div>'
+        ).join('') +
+      '</div>'
+    : '';
+  document.getElementById('confirmTitle').textContent = item.name;
+  document.getElementById('confirmMessage').innerHTML =
+    (item.category ? '<span class="badge badge-cat">' + escHtml(item.category) + '</span> ' : '') +
+    (item.location ? '<span class="badge badge-loc">' + escHtml(item.location) + '</span>' : '') +
+    (item.description ? '<p style="margin-top:12px">' + escHtml(item.description) + '</p>' : '') +
+    photosHtml +
+    '<div class="timestamps" style="display:block">Δημιουργία: ' + formatDate(item.createdAt) + '<br>Ενημέρωση: ' + formatDate(item.updatedAt) + '</div>';
+  document.getElementById('confirmFooter').innerHTML =
+    '<button class="btn btn-outline" onclick="closeModal(\'confirmModal\')">Κλείσιμο</button>';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
 // ── Item Modal ─────────────────────────────────────────────
 
 function openItemModal(id) {
+  if (!isEditorUser) { showToast('Συνδεθείτε ως editor για επεξεργασία.', true); return; }
+
   const modal = document.getElementById('itemModal');
   const title = document.getElementById('itemModalTitle');
   const delBtn = document.getElementById('deleteItemBtn');
@@ -888,6 +1055,7 @@ async function confirmMove() {
 // ── Categories Modal ───────────────────────────────────────
 
 function openCategoriesModal() {
+  if (!isEditorUser) { showToast('Συνδεθείτε ως editor για διαχείριση κατηγοριών.', true); return; }
   renderCatList();
   document.getElementById('categoriesModal').classList.add('active');
 }
@@ -996,7 +1164,7 @@ async function exportData() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'archaeological-warehouse-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'archeovault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
     showToast('Τα δεδομένα εξήχθησαν.');
@@ -1076,11 +1244,16 @@ document.getElementById('searchInput').addEventListener('input', () => {
 
 // ── Init ───────────────────────────────────────────────────
 
-if (!API_URL) {
+if (!API_URL || !GOOGLE_CLIENT_ID) {
   document.getElementById('configBanner').style.display = '';
-} else {
+}
+if (API_URL) {
   loadAll();
 }
+
+window.addEventListener('load', () => {
+  if (GOOGLE_CLIENT_ID) initGoogleSignIn();
+});
 </script>
 </body>
 </html>
