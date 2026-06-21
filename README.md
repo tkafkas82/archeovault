@@ -24,7 +24,7 @@ One `index.html` file does everything. Google Sheets stores the data. Google App
 - **Export/Import** — full JSON backup and restore (editor-only)
 - **PWA** — installable on mobile home screens, works like a native app
 - **Responsive** — desktop, tablet, and mobile layouts
-- **Greek UI** — interface in Greek, suitable for Hellenic archaeological projects
+- **Bilingual UI (EL/EN)** — Greek and English interface with one-click toggle; translations stored in a Google Sheet tab so editors can update text without touching code
 - **Single file** — all CSS, JS, SVGs, manifest, and service worker are inline. No build step, no dependencies.
 
 ## Quick Start
@@ -48,6 +48,12 @@ Create a new Google Sheet with three tabs:
 | email |
 |-------|
 | your@gmail.com |
+
+**Translations** (optional — auto-populated on first editor login)
+
+| key | el | en |
+|-----|----|----|
+| btn.save | Αποθήκευση | Save |
 
 > The app auto-creates these tabs if they don't exist.
 

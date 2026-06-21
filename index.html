@@ -482,6 +482,22 @@ body {
   font-size: 0.85em;
 }
 
+/* ── Language Toggle ────────────────────────────────────── */
+.lang-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: var(--text-inv);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.78em;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.lang-toggle:hover { background: rgba(255,255,255,0.25); }
+
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 600px) {
   .header { padding: 10px 12px; gap: 10px; }
@@ -509,10 +525,7 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
 <div class="toast" id="toast"></div>
 
 <!-- ── Config Banner ─────────────────────────────────────── -->
-<div class="config-banner" id="configBanner" style="display:none">
-  Το API δεν έχει ρυθμιστεί. Ανοίξτε το αρχείο <code>index.html</code> και συμπληρώστε τα <code>API_URL</code> και <code>GOOGLE_CLIENT_ID</code>.
-  Δείτε το αρχείο <code>SETUP.md</code> για οδηγίες.
-</div>
+<div class="config-banner" id="configBanner" style="display:none"></div>
 
 <!-- ── Header ────────────────────────────────────────────── -->
 <header class="header">
@@ -523,6 +536,7 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
     <button class="btn btn-primary editor-only" onclick="openItemModal()" style="display:none">+ Αντικείμενο</button>
     <button class="btn btn-secondary editor-only" onclick="openCategoriesModal()" style="display:none">Κατηγορίες</button>
     <button class="btn btn-secondary editor-only" onclick="openExportModal()" style="display:none">Εξαγωγή / Εισαγωγή</button>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLanguage()">EN</button>
     <div class="auth-area" id="authArea">
       <div id="googleSignInBtn"></div>
       <div id="userChip" style="display:none"></div>
@@ -665,6 +679,230 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
 
 
 <script>
+// ── i18n ──────────────────────────────────────────────────
+
+var DEFAULT_TRANSLATIONS = {
+  'app.title':              { el: 'ArcheoVault', en: 'ArcheoVault' },
+  'search.placeholder':     { el: 'Αναζήτηση αντικειμένων...', en: 'Search items...' },
+  'btn.addItem':            { el: '+ Αντικείμενο', en: '+ Item' },
+  'btn.categories':         { el: 'Κατηγορίες', en: 'Categories' },
+  'btn.exportImport':       { el: 'Εξαγωγή / Εισαγωγή', en: 'Export / Import' },
+  'filter.allCategories':   { el: 'Όλες οι κατηγορίες', en: 'All categories' },
+  'filter.allLocations':    { el: 'Όλες οι τοποθεσίες', en: 'All locations' },
+  'items.count':            { el: 'αντικείμενα', en: 'items' },
+  'items.countOf':          { el: 'από', en: 'of' },
+  'empty.noItems':          { el: 'Δεν υπάρχουν αντικείμενα', en: 'No items' },
+  'empty.noResults':        { el: 'Κανένα αποτέλεσμα', en: 'No results' },
+  'empty.addHint':          { el: 'Πατήστε "+ Αντικείμενο" για να ξεκινήσετε.', en: 'Press "+ Item" to get started.' },
+  'empty.loginHint':        { el: 'Συνδεθείτε ως editor για να προσθέσετε αντικείμενα.', en: 'Sign in as editor to add items.' },
+  'empty.filterHint':       { el: 'Δοκιμάστε διαφορετικά φίλτρα.', en: 'Try different filters.' },
+  'modal.newItem':          { el: 'Νέο Αντικείμενο', en: 'New Item' },
+  'modal.editItem':         { el: 'Επεξεργασία Αντικειμένου', en: 'Edit Item' },
+  'modal.moveItem':         { el: 'Μετακίνηση Αντικειμένου', en: 'Move Item' },
+  'modal.categories':       { el: 'Διαχείριση Κατηγοριών', en: 'Manage Categories' },
+  'modal.exportImport':     { el: 'Εξαγωγή / Εισαγωγή', en: 'Export / Import' },
+  'modal.confirm':          { el: 'Επιβεβαίωση', en: 'Confirmation' },
+  'label.name':             { el: 'Όνομα *', en: 'Name *' },
+  'label.category':         { el: 'Κατηγορία *', en: 'Category *' },
+  'label.location':         { el: 'Τοποθεσία', en: 'Location' },
+  'label.description':      { el: 'Περιγραφή', en: 'Description' },
+  'label.photos':           { el: 'Φωτογραφίες', en: 'Photos' },
+  'label.newLocation':      { el: 'Νέα Τοποθεσία', en: 'New Location' },
+  'placeholder.name':       { el: 'π.χ. Αμφορέας Τύπου Α', en: 'e.g. Type A Amphora' },
+  'placeholder.location':   { el: 'π.χ. Ράφι 15', en: 'e.g. Shelf 15' },
+  'placeholder.description':{ el: 'Πληροφορίες για το αντικείμενο...', en: 'Information about the item...' },
+  'placeholder.newLocation':{ el: 'π.χ. Ράφι 20', en: 'e.g. Shelf 20' },
+  'placeholder.newCat':     { el: 'Νέα κατηγορία...', en: 'New category...' },
+  'placeholder.driveLink':  { el: 'Google Drive link...', en: 'Google Drive link...' },
+  'btn.stockPicker':        { el: 'Επιλογή εικονιδίου', en: 'Choose icon' },
+  'btn.addLink':            { el: 'Link', en: 'Link' },
+  'btn.or':                 { el: 'ή', en: 'or' },
+  'select.choose':          { el: '-- Επιλέξτε --', en: '-- Select --' },
+  'parent.none':            { el: 'Γονική: (κανένα)', en: 'Parent: (none)' },
+  'btn.add':                { el: 'Προσθήκη', en: 'Add' },
+  'btn.cancel':             { el: 'Ακύρωση', en: 'Cancel' },
+  'btn.save':               { el: 'Αποθήκευση', en: 'Save' },
+  'btn.delete':             { el: 'Διαγραφή', en: 'Delete' },
+  'btn.close':              { el: 'Κλείσιμο', en: 'Close' },
+  'btn.move':               { el: 'Μετακίνηση', en: 'Move' },
+  'btn.export':             { el: 'Εξαγωγή Δεδομένων (JSON)', en: 'Export Data (JSON)' },
+  'btn.import':             { el: 'Εισαγωγή', en: 'Import' },
+  'import.hint':            { el: 'Εισαγωγή αντιγράφου ασφαλείας:', en: 'Import backup:' },
+  'import.warning':         { el: 'Προσοχή: Η εισαγωγή αντικαθιστά όλα τα υπάρχοντα δεδομένα.', en: 'Warning: Import replaces all existing data.' },
+  'config.banner':          { el: 'Το API δεν έχει ρυθμιστεί. Ανοίξτε το αρχείο index.html και συμπληρώστε τα API_URL και GOOGLE_CLIENT_ID. Δείτε το αρχείο SETUP.md για οδηγίες.', en: 'API not configured. Open index.html and set API_URL and GOOGLE_CLIENT_ID. See SETUP.md for instructions.' },
+  'auth.loginEditor':       { el: 'Σύνδεση ως editor: ', en: 'Signed in as editor: ' },
+  'auth.loginReadonly':     { el: 'Σύνδεση (μόνο ανάγνωση): ', en: 'Signed in (read-only): ' },
+  'auth.clickToSignOut':    { el: 'Κλικ για αποσύνδεση', en: 'Click to sign out' },
+  'auth.signedOut':         { el: 'Αποσυνδεθήκατε.', en: 'Signed out.' },
+  'auth.signOutTitle':      { el: 'Αποσύνδεση', en: 'Sign Out' },
+  'auth.signOutConfirm':    { el: 'Θέλετε σίγουρα να αποσυνδεθείτε;', en: 'Are you sure you want to sign out?' },
+  'auth.signOutBtn':        { el: 'Αποσύνδεση', en: 'Sign Out' },
+  'auth.sessionExpired':    { el: 'Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.', en: 'Your session expired. Please sign in again.' },
+  'auth.editorRequired':    { el: 'Απαιτείται σύνδεση με δικαίωμα επεξεργασίας.', en: 'Editor sign-in required.' },
+  'auth.editorRequiredEdit':{ el: 'Συνδεθείτε ως editor για επεξεργασία.', en: 'Sign in as editor to edit.' },
+  'auth.editorRequiredCat': { el: 'Συνδεθείτε ως editor για διαχείριση κατηγοριών.', en: 'Sign in as editor to manage categories.' },
+  'toast.itemUpdated':      { el: 'Το αντικείμενο ενημερώθηκε.', en: 'Item updated.' },
+  'toast.itemAdded':        { el: 'Το αντικείμενο προστέθηκε.', en: 'Item added.' },
+  'toast.itemDeleted':      { el: 'Το αντικείμενο διαγράφηκε.', en: 'Item deleted.' },
+  'toast.itemMoved':        { el: 'Το αντικείμενο μετακινήθηκε.', en: 'Item moved.' },
+  'toast.catAdded':         { el: 'Η κατηγορία προστέθηκε.', en: 'Category added.' },
+  'toast.subcatAdded':      { el: 'Η υποκατηγορία προστέθηκε.', en: 'Subcategory added.' },
+  'toast.catRenamed':       { el: 'Η κατηγορία μετονομάστηκε.', en: 'Category renamed.' },
+  'toast.catDeleted':       { el: 'Η κατηγορία διαγράφηκε.', en: 'Category deleted.' },
+  'toast.exported':         { el: 'Τα δεδομένα εξήχθησαν.', en: 'Data exported.' },
+  'toast.imported':         { el: 'Τα δεδομένα εισήχθησαν.', en: 'Data imported.' },
+  'toast.errorLoad':        { el: 'Σφάλμα φόρτωσης: ', en: 'Loading error: ' },
+  'toast.error':            { el: 'Σφάλμα: ', en: 'Error: ' },
+  'toast.errorExport':      { el: 'Σφάλμα εξαγωγής: ', en: 'Export error: ' },
+  'toast.errorImport':      { el: 'Σφάλμα εισαγωγής: ', en: 'Import error: ' },
+  'valid.nameRequired':     { el: 'Παρακαλώ συμπληρώστε το όνομα.', en: 'Please enter a name.' },
+  'valid.catRequired':      { el: 'Παρακαλώ επιλέξτε κατηγορία.', en: 'Please select a category.' },
+  'valid.locRequired':      { el: 'Παρακαλώ συμπληρώστε τοποθεσία.', en: 'Please enter a location.' },
+  'confirm.deleteItem':     { el: 'Διαγραφή Αντικειμένου', en: 'Delete Item' },
+  'confirm.deleteItemMsg':  { el: 'Θέλετε σίγουρα να διαγράψετε το "', en: 'Are you sure you want to delete "' },
+  'confirm.deleteCat':      { el: 'Διαγραφή Κατηγορίας', en: 'Delete Category' },
+  'confirm.deleteCatMsg':   { el: ' περιέχει ', en: ' contains ' },
+  'confirm.deleteCatItems': { el: ' αντικείμενα. Τι θέλετε να κάνετε;', en: ' items. What do you want to do?' },
+  'confirm.deleteCatEmpty': { el: 'Θέλετε να διαγράψετε την κατηγορία "', en: 'Do you want to delete category "' },
+  'confirm.deleteAll':      { el: 'Διαγραφή όλων', en: 'Delete all' },
+  'confirm.reassign':       { el: 'Μετακίνηση σε άλλη', en: 'Move to another' },
+  'confirm.importTitle':    { el: 'Εισαγωγή Δεδομένων', en: 'Import Data' },
+  'confirm.importMsg':      { el: 'Αυτή η ενέργεια θα αντικαταστήσει ΟΛΑ τα υπάρχοντα δεδομένα. Συνέχεια;', en: 'This will replace ALL existing data. Continue?' },
+  'cat.noCats':             { el: 'Δεν υπάρχουν κατηγορίες', en: 'No categories' },
+  'cat.addSubcatPrompt':    { el: 'Νέα υποκατηγορία στο "', en: 'New subcategory in "' },
+  'cat.renamePrompt':       { el: 'Νέο όνομα κατηγορίας:', en: 'New category name:' },
+  'cat.reassignPrompt1':    { el: 'Μετακίνηση ', en: 'Move ' },
+  'cat.reassignPrompt2':    { el: ' αντικειμένων σε ποια κατηγορία;', en: ' items to which category?' },
+  'cat.available':          { el: 'Διαθέσιμες:', en: 'Available:' },
+  'ts.created':             { el: 'Δημιουργία: ', en: 'Created: ' },
+  'ts.updated':             { el: 'Ενημέρωση: ', en: 'Updated: ' },
+  'ts.lastUpdated':         { el: 'Τελευταία ενημέρωση: ', en: 'Last updated: ' },
+  'cat.addSubcatTitle':     { el: 'Προσθήκη υποκατηγορίας', en: 'Add subcategory' },
+  'cat.renameTitle':        { el: 'Μετονομασία', en: 'Rename' },
+  'cat.deleteTitle':        { el: 'Διαγραφή', en: 'Delete' }
+};
+
+var currentLang = 'el';
+var loadedTranslations = {};
+
+function t(key) {
+  if (loadedTranslations[currentLang] && loadedTranslations[currentLang][key]) {
+    return loadedTranslations[currentLang][key];
+  }
+  var def = DEFAULT_TRANSLATIONS[key];
+  if (def) return def[currentLang] || def['el'] || key;
+  return key;
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('archeovault_lang', lang);
+  applyLanguage();
+}
+
+function toggleLanguage() {
+  setLanguage(currentLang === 'el' ? 'en' : 'el');
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLang;
+  var langBtn = document.getElementById('langToggle');
+  if (langBtn) langBtn.textContent = currentLang === 'el' ? 'EN' : 'EL';
+
+  document.getElementById('searchInput').placeholder = t('search.placeholder');
+  var addItemBtn = document.querySelector('.header-actions .btn-primary.editor-only');
+  if (addItemBtn) addItemBtn.textContent = t('btn.addItem');
+  var catBtn = document.querySelectorAll('.header-actions .btn-secondary.editor-only');
+  if (catBtn[0]) catBtn[0].textContent = t('btn.categories');
+  if (catBtn[1]) catBtn[1].textContent = t('btn.exportImport');
+
+  updateCategoryDropdowns();
+  updateLocationDropdown();
+  renderItems();
+
+  // Item modal labels
+  var itemModalLabels = document.querySelectorAll('#itemModal .form-group label');
+  if (itemModalLabels.length >= 5) {
+    itemModalLabels[0].textContent = t('label.name');
+    itemModalLabels[1].textContent = t('label.category');
+    itemModalLabels[2].textContent = t('label.location');
+    itemModalLabels[3].textContent = t('label.description');
+    itemModalLabels[4].textContent = t('label.photos');
+  }
+  var itemNameInput = document.getElementById('itemName');
+  if (itemNameInput) itemNameInput.placeholder = t('placeholder.name');
+  var itemLocInput = document.getElementById('itemLocation');
+  if (itemLocInput) itemLocInput.placeholder = t('placeholder.location');
+  var itemDescInput = document.getElementById('itemDescription');
+  if (itemDescInput) itemDescInput.placeholder = t('placeholder.description');
+  var photoUrlInput = document.getElementById('photoUrlInput');
+  if (photoUrlInput) photoUrlInput.placeholder = t('placeholder.driveLink');
+  var stockBtn = document.getElementById('stockPickerBtn');
+  if (stockBtn) stockBtn.textContent = t('btn.stockPicker');
+  var orSpan = document.querySelector('#itemModal .form-group div > span');
+  if (orSpan) orSpan.textContent = t('btn.or');
+  var addLinkBtn = document.querySelector('#itemModal .form-group div > button:last-child');
+  // Find the Link button (not the stock picker)
+  document.querySelectorAll('#itemModal .form-group div > button.btn-outline.btn-sm').forEach(function(btn) {
+    if (btn.id !== 'stockPickerBtn') btn.textContent = t('btn.addLink');
+  });
+  var itemFooterCancel = document.querySelector('#itemModalFooter .btn-outline');
+  if (itemFooterCancel) itemFooterCancel.textContent = t('btn.cancel');
+  var itemFooterSave = document.querySelector('#itemModalFooter .btn-primary');
+  if (itemFooterSave) itemFooterSave.textContent = t('btn.save');
+  var deleteItemBtn = document.getElementById('deleteItemBtn');
+  if (deleteItemBtn) deleteItemBtn.textContent = t('btn.delete');
+
+  // Move modal
+  var moveModalTitle = document.querySelector('#moveModal .modal-header h2');
+  if (moveModalTitle) moveModalTitle.textContent = t('modal.moveItem');
+  var moveLocLabel = document.querySelector('#moveModal .form-group label');
+  if (moveLocLabel) moveLocLabel.textContent = t('label.newLocation');
+  var moveLocInput = document.getElementById('moveNewLocation');
+  if (moveLocInput) moveLocInput.placeholder = t('placeholder.newLocation');
+  var moveCancelBtn = document.querySelector('#moveModal .modal-footer .btn-outline');
+  if (moveCancelBtn) moveCancelBtn.textContent = t('btn.cancel');
+  var moveMoveBtn = document.querySelector('#moveModal .modal-footer .btn-green');
+  if (moveMoveBtn) moveMoveBtn.textContent = t('btn.move');
+
+  // Categories modal
+  var catModalTitle = document.querySelector('#categoriesModal .modal-header h2');
+  if (catModalTitle) catModalTitle.textContent = t('modal.categories');
+  var newCatInput = document.getElementById('newCatName');
+  if (newCatInput) newCatInput.placeholder = t('placeholder.newCat');
+  var addCatBtn = document.querySelector('#categoriesModal .btn-primary');
+  if (addCatBtn) addCatBtn.textContent = t('btn.add');
+
+  // Export modal
+  var exportModalTitle = document.querySelector('#exportModal .modal-header h2');
+  if (exportModalTitle) exportModalTitle.textContent = t('modal.exportImport');
+  var exportBtn = document.querySelector('#exportModal .btn-green');
+  if (exportBtn) exportBtn.textContent = t('btn.export');
+  var importHint = document.querySelector('#exportModal .editor-only p:first-child');
+  if (importHint) importHint.textContent = t('import.hint');
+  var importWarn = document.querySelector('#exportModal .editor-only p:last-child');
+  if (importWarn) importWarn.textContent = t('import.warning');
+}
+
+async function loadTranslations() {
+  try {
+    var data = await apiGet({ action: 'getTranslations' });
+    if (data.translations) {
+      loadedTranslations = data.translations;
+    }
+  } catch (e) {
+    // silently fall back to defaults
+  }
+}
+
+async function seedTranslations() {
+  try {
+    await apiPost({ action: 'seedTranslations', translations: DEFAULT_TRANSLATIONS });
+  } catch (e) {
+    // non-critical
+  }
+}
+
 // ── State ──────────────────────────────────────────────────
 
 let categories = [];
@@ -733,9 +971,9 @@ function handleCredentialResponse(response) {
     updateAuthUI();
     saveAuthToStorage();
     if (isEditorUser) {
-      showToast('Σύνδεση ως editor: ' + authUser.email);
+      showToast(t('auth.loginEditor') + authUser.email);
     } else {
-      showToast('Σύνδεση (μόνο ανάγνωση): ' + authUser.email);
+      showToast(t('auth.loginReadonly') + authUser.email);
     }
   }).catch(function() {
     isEditorUser = false;
@@ -746,11 +984,11 @@ function handleCredentialResponse(response) {
 
 function signOut() {
   showConfirm(
-    'Αποσύνδεση',
-    'Θέλετε σίγουρα να αποσυνδεθείτε;',
+    t('auth.signOutTitle'),
+    t('auth.signOutConfirm'),
     [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
-      { label: 'Αποσύνδεση', cls: 'btn-danger', action: function() {
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('auth.signOutBtn'), cls: 'btn-danger', action: function() {
         closeModal('confirmModal');
         authUser = null;
         isEditorUser = false;
@@ -758,7 +996,7 @@ function signOut() {
         updateAuthUI();
         google.accounts.id.disableAutoSelect();
         initGoogleSignIn();
-        showToast('Αποσυνδεθήκατε.');
+        showToast(t('auth.signedOut'));
       }}
     ]
   );
@@ -777,7 +1015,7 @@ function updateAuthUI() {
       ? '<span class="editor-badge">Editor</span>'
       : '<span class="readonly-badge">Read-only</span>';
     userChip.innerHTML =
-      '<div class="user-chip" onclick="signOut()" title="Κλικ για αποσύνδεση">' +
+      '<div class="user-chip" onclick="signOut()" title="' + escHtml(t('auth.clickToSignOut')) + '">' +
         imgHtml +
         '<span class="user-name">' + escHtml(authUser.name.split(' ')[0]) + '</span>' +
         badgeHtml +
@@ -881,7 +1119,7 @@ async function apiGet(params) {
 
 async function apiPost(body) {
   if (!API_URL) throw new Error('API not configured');
-  if (!authUser || !isEditorUser) throw new Error('Απαιτείται σύνδεση με δικαίωμα επεξεργασίας.');
+  if (!authUser || !isEditorUser) throw new Error(t('auth.editorRequired'));
   body._idToken = authUser.idToken;
   var resp = await fetch(API_URL, {
     method: 'POST',
@@ -896,10 +1134,10 @@ async function apiPost(body) {
       clearAuthFromStorage();
       updateAuthUI();
       initGoogleSignIn();
-      throw new Error('Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
+      throw new Error(t('auth.sessionExpired'));
     }
     if (data.error === 'NOT_EDITOR') {
-      throw new Error(data.message || 'Δεν έχετε δικαίωμα επεξεργασίας.');
+      throw new Error(data.message || t('auth.editorRequired'));
     }
     throw new Error(data.error || 'Unknown error');
   }
@@ -932,7 +1170,7 @@ async function loadAll() {
     updateLocationDropdown();
     renderItems();
   } catch (err) {
-    showToast('Σφάλμα φόρτωσης: ' + err.message, true);
+    showToast(t('toast.errorLoad') + err.message, true);
   } finally {
     hideSpinner();
   }
@@ -960,16 +1198,16 @@ function renderItems() {
 
   document.getElementById('itemCount').textContent =
     filtered.length === items.length
-      ? items.length + ' αντικείμενα'
-      : filtered.length + ' από ' + items.length + ' αντικείμενα';
+      ? items.length + ' ' + t('items.count')
+      : filtered.length + ' ' + t('items.countOf') + ' ' + items.length + ' ' + t('items.count');
 
   if (filtered.length === 0) {
     container.innerHTML = '<div class="empty-state">' +
       '<div class="icon">🏺</div>' +
-      '<h2>' + (items.length === 0 ? 'Δεν υπάρχουν αντικείμενα' : 'Κανένα αποτέλεσμα') + '</h2>' +
+      '<h2>' + (items.length === 0 ? t('empty.noItems') : t('empty.noResults')) + '</h2>' +
       '<p>' + (items.length === 0
-        ? (isEditorUser ? 'Πατήστε "+ Αντικείμενο" για να ξεκινήσετε.' : 'Συνδεθείτε ως editor για να προσθέσετε αντικείμενα.')
-        : 'Δοκιμάστε διαφορετικά φίλτρα.') + '</p>' +
+        ? (isEditorUser ? t('empty.addHint') : t('empty.loginHint'))
+        : t('empty.filterHint')) + '</p>' +
       '</div>';
     return;
   }
@@ -1016,21 +1254,21 @@ function updateCategoryDropdowns() {
   var tree = buildCategoryTree(categories);
   var flat = flattenTree(tree, 0);
 
-  filterSel.innerHTML = '<option value="">Όλες οι κατηγορίες</option>' +
+  filterSel.innerHTML = '<option value="">' + t('filter.allCategories') + '</option>' +
     flat.map(function(c) {
       var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
       return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
     }).join('');
   filterSel.value = currentFilter;
 
-  itemSel.innerHTML = '<option value="">-- Επιλέξτε --</option>' +
+  itemSel.innerHTML = '<option value="">' + t('select.choose') + '</option>' +
     flat.map(function(c) {
       var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
       return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
     }).join('');
 
   if (parentSel) {
-    parentSel.innerHTML = '<option value="">Γονική: (κανένα)</option>' +
+    parentSel.innerHTML = '<option value="">' + t('parent.none') + '</option>' +
       flat.map(function(c) {
         var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
         return '<option value="' + escHtml(c.id) + '">' + indent + escHtml(c.name) + '</option>';
@@ -1044,7 +1282,7 @@ function updateLocationDropdown() {
   var locSet = {};
   items.forEach(function(i) { if (i.location) locSet[i.location] = true; });
   var locations = Object.keys(locSet).sort();
-  sel.innerHTML = '<option value="">Όλες οι τοποθεσίες</option>' +
+  sel.innerHTML = '<option value="">' + t('filter.allLocations') + '</option>' +
     locations.map(function(l) { return '<option value="' + escHtml(l) + '">' + escHtml(l) + '</option>'; }).join('');
   sel.value = current;
 }
@@ -1072,16 +1310,16 @@ function viewItemDetail(id) {
     (item.location ? '<span class="badge badge-loc">' + escHtml(item.location) + '</span>' : '') +
     (item.description ? '<p style="margin-top:12px">' + escHtml(item.description) + '</p>' : '') +
     photosHtml +
-    '<div class="timestamps" style="display:block">Δημιουργία: ' + formatDate(item.createdAt) + '<br>Ενημέρωση: ' + formatDate(item.updatedAt) + '</div>';
+    '<div class="timestamps" style="display:block">' + t('ts.created') + formatDate(item.createdAt) + '<br>' + t('ts.updated') + formatDate(item.updatedAt) + '</div>';
   document.getElementById('confirmFooter').innerHTML =
-    '<button class="btn btn-outline" onclick="closeModal(\'confirmModal\')">Κλείσιμο</button>';
+    '<button class="btn btn-outline" onclick="closeModal(\'confirmModal\')">' + t('btn.close') + '</button>';
   document.getElementById('confirmModal').classList.add('active');
 }
 
 // ── Item Modal ─────────────────────────────────────────────
 
 function openItemModal(id) {
-  if (!isEditorUser) { showToast('Συνδεθείτε ως editor για επεξεργασία.', true); return; }
+  if (!isEditorUser) { showToast(t('auth.editorRequiredEdit'), true); return; }
 
   var modal = document.getElementById('itemModal');
   var title = document.getElementById('itemModalTitle');
@@ -1100,7 +1338,7 @@ function openItemModal(id) {
   if (id) {
     var item = items.find(function(i) { return i.id === id; });
     if (!item) return;
-    title.textContent = 'Επεξεργασία Αντικειμένου';
+    title.textContent = t('modal.editItem');
     document.getElementById('itemId').value = item.id;
     document.getElementById('itemName').value = item.name || '';
     document.getElementById('itemCategory').value = item.category || '';
@@ -1110,9 +1348,9 @@ function openItemModal(id) {
     renderPhotoGallery();
     delBtn.style.display = '';
     ts.style.display = '';
-    ts.innerHTML = 'Δημιουργία: ' + formatDate(item.createdAt) + '<br>Τελευταία ενημέρωση: ' + formatDate(item.updatedAt);
+    ts.innerHTML = t('ts.created') + formatDate(item.createdAt) + '<br>' + t('ts.lastUpdated') + formatDate(item.updatedAt);
   } else {
-    title.textContent = 'Νέο Αντικείμενο';
+    title.textContent = t('modal.newItem');
     delBtn.style.display = 'none';
     ts.style.display = 'none';
   }
@@ -1124,7 +1362,8 @@ function formatDate(d) {
   if (!d) return '-';
   try {
     var dt = new Date(d);
-    return dt.toLocaleDateString('el-GR') + ' ' + dt.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+    var locale = currentLang === 'en' ? 'en-GB' : 'el-GR';
+    return dt.toLocaleDateString(locale) + ' ' + dt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   } catch (e) { return d; }
 }
 
@@ -1136,22 +1375,22 @@ async function saveItem() {
   var description = document.getElementById('itemDescription').value.trim();
   var photos = currentPhotos.join(',');
 
-  if (!name) { showToast('Παρακαλώ συμπληρώστε το όνομα.', true); return; }
-  if (!category) { showToast('Παρακαλώ επιλέξτε κατηγορία.', true); return; }
+  if (!name) { showToast(t('valid.nameRequired'), true); return; }
+  if (!category) { showToast(t('valid.catRequired'), true); return; }
 
   showSpinner();
   try {
     if (id) {
       await apiPost({ action: 'updateItem', id: id, name: name, category: category, location: location, description: description, photos: photos });
-      showToast('Το αντικείμενο ενημερώθηκε.');
+      showToast(t('toast.itemUpdated'));
     } else {
       await apiPost({ action: 'addItem', name: name, category: category, location: location, description: description, photos: photos });
-      showToast('Το αντικείμενο προστέθηκε.');
+      showToast(t('toast.itemAdded'));
     }
     closeModal('itemModal');
     await loadAll();
   } catch (err) {
-    showToast('Σφάλμα: ' + err.message, true);
+    showToast(t('toast.error') + err.message, true);
   } finally {
     hideSpinner();
   }
@@ -1162,20 +1401,20 @@ async function deleteCurrentItem() {
   if (!id) return;
   var item = items.find(function(i) { return i.id === id; });
   showConfirm(
-    'Διαγραφή Αντικειμένου',
-    'Θέλετε σίγουρα να διαγράψετε το "' + (item ? item.name : '') + '";',
+    t('confirm.deleteItem'),
+    t('confirm.deleteItemMsg') + (item ? item.name : '') + '";',
     [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
-      { label: 'Διαγραφή', cls: 'btn-danger', action: async function() {
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('btn.delete'), cls: 'btn-danger', action: async function() {
         closeModal('confirmModal');
         showSpinner();
         try {
           await apiPost({ action: 'deleteItem', id: id });
-          showToast('Το αντικείμενο διαγράφηκε.');
+          showToast(t('toast.itemDeleted'));
           closeModal('itemModal');
           await loadAll();
         } catch (err) {
-          showToast('Σφάλμα: ' + err.message, true);
+          showToast(t('toast.error') + err.message, true);
         } finally { hideSpinner(); }
       }}
     ]
@@ -1297,22 +1536,22 @@ function openMoveModal(id) {
 
 async function confirmMove() {
   var newLoc = document.getElementById('moveNewLocation').value.trim();
-  if (!newLoc) { showToast('Παρακαλώ συμπληρώστε τοποθεσία.', true); return; }
+  if (!newLoc) { showToast(t('valid.locRequired'), true); return; }
   showSpinner();
   try {
     await apiPost({ action: 'moveItem', id: moveItemId, location: newLoc });
-    showToast('Το αντικείμενο μετακινήθηκε.');
+    showToast(t('toast.itemMoved'));
     closeModal('moveModal');
     await loadAll();
   } catch (err) {
-    showToast('Σφάλμα: ' + err.message, true);
+    showToast(t('toast.error') + err.message, true);
   } finally { hideSpinner(); }
 }
 
 // ── Categories Modal ───────────────────────────────────────
 
 function openCategoriesModal() {
-  if (!isEditorUser) { showToast('Συνδεθείτε ως editor για διαχείριση κατηγοριών.', true); return; }
+  if (!isEditorUser) { showToast(t('auth.editorRequiredCat'), true); return; }
   updateCategoryDropdowns();
   renderCatList();
   document.getElementById('categoriesModal').classList.add('active');
@@ -1321,7 +1560,7 @@ function openCategoriesModal() {
 function renderCatList() {
   var list = document.getElementById('catList');
   if (categories.length === 0) {
-    list.innerHTML = '<li style="color:var(--text-light);font-style:italic;padding:16px;text-align:center">Δεν υπάρχουν κατηγορίες</li>';
+    list.innerHTML = '<li style="color:var(--text-light);font-style:italic;padding:16px;text-align:center">' + t('cat.noCats') + '</li>';
     return;
   }
   var tree = buildCategoryTree(categories);
@@ -1335,9 +1574,9 @@ function renderCatList() {
     return '<li style="' + indent + '">' +
       '<div class="cat-info">' + prefix + '<span>' + escHtml(c.name) + '</span><span class="cat-count">' + count + '</span></div>' +
       '<div class="cat-actions">' +
-        '<button title="Προσθήκη υποκατηγορίας" onclick="addSubcategory(\'' + c.id + '\',\'' + escapedName + '\')">➕</button>' +
-        '<button title="Μετονομασία" onclick="renameCategory(\'' + c.id + '\',\'' + escapedName + '\')">✏️</button>' +
-        '<button title="Διαγραφή" onclick="deleteCategoryPrompt(\'' + c.id + '\',\'' + escapedName + '\',' + count + ')">🗑️</button>' +
+        '<button title="' + t('cat.addSubcatTitle') + '" onclick="addSubcategory(\'' + c.id + '\',\'' + escapedName + '\')">➕</button>' +
+        '<button title="' + t('cat.renameTitle') + '" onclick="renameCategory(\'' + c.id + '\',\'' + escapedName + '\')">✏️</button>' +
+        '<button title="' + t('cat.deleteTitle') + '" onclick="deleteCategoryPrompt(\'' + c.id + '\',\'' + escapedName + '\',' + count + ')">🗑️</button>' +
       '</div>' +
     '</li>';
   }).join('');
@@ -1354,33 +1593,33 @@ async function addCategory() {
     await apiPost({ action: 'addCategory', name: name, parentId: parentId });
     input.value = '';
     if (parentSel) parentSel.value = '';
-    showToast('Η κατηγορία προστέθηκε.');
+    showToast(t('toast.catAdded'));
     await loadAll();
     renderCatList();
   } catch (err) {
-    showToast('Σφάλμα: ' + err.message, true);
+    showToast(t('toast.error') + err.message, true);
   } finally { hideSpinner(); }
 }
 
 function addSubcategory(parentId, parentName) {
-  var name = prompt('Νέα υποκατηγορία στο "' + parentName + '":');
+  var name = prompt(t('cat.addSubcatPrompt') + parentName + '":');
   if (!name || !name.trim()) return;
   showSpinner();
   apiPost({ action: 'addCategory', name: name.trim(), parentId: parentId })
-    .then(function() { showToast('Η υποκατηγορία προστέθηκε.'); return loadAll(); })
+    .then(function() { showToast(t('toast.subcatAdded')); return loadAll(); })
     .then(function() { renderCatList(); updateCategoryDropdowns(); })
-    .catch(function(err) { showToast('Σφάλμα: ' + err.message, true); })
+    .catch(function(err) { showToast(t('toast.error') + err.message, true); })
     .finally(function() { hideSpinner(); });
 }
 
 function renameCategory(id, oldName) {
-  var newName = prompt('Νέο όνομα κατηγορίας:', oldName);
+  var newName = prompt(t('cat.renamePrompt'), oldName);
   if (!newName || newName.trim() === oldName) return;
   showSpinner();
   apiPost({ action: 'renameCategory', id: id, name: newName.trim() })
-    .then(function() { showToast('Η κατηγορία μετονομάστηκε.'); return loadAll(); })
+    .then(function() { showToast(t('toast.catRenamed')); return loadAll(); })
     .then(function() { renderCatList(); })
-    .catch(function(err) { showToast('Σφάλμα: ' + err.message, true); })
+    .catch(function(err) { showToast(t('toast.error') + err.message, true); })
     .finally(function() { hideSpinner(); });
 }
 
@@ -1388,30 +1627,30 @@ function deleteCategoryPrompt(id, name, count) {
   if (count > 0) {
     var otherCats = categories.filter(function(c) { return c.id !== id; });
     var buttons = [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
-      { label: 'Διαγραφή όλων', cls: 'btn-danger', action: function() { forceDeleteCategory(id, true, null); } }
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('confirm.deleteAll'), cls: 'btn-danger', action: function() { forceDeleteCategory(id, true, null); } }
     ];
     if (otherCats.length > 0) {
       buttons.splice(1, 0, {
-        label: 'Μετακίνηση σε άλλη', cls: 'btn-green', action: function() {
-          var target = prompt('Μετακίνηση ' + count + ' αντικειμένων σε ποια κατηγορία;\n\nΔιαθέσιμες:\n' +
+        label: t('confirm.reassign'), cls: 'btn-green', action: function() {
+          var target = prompt(t('cat.reassignPrompt1') + count + t('cat.reassignPrompt2') + '\n\n' + t('cat.available') + '\n' +
             otherCats.map(function(c) { return '  - ' + c.name; }).join('\n'));
           if (target) forceDeleteCategory(id, false, target.trim());
         }
       });
     }
     showConfirm(
-      'Διαγραφή Κατηγορίας',
-      'Η κατηγορία "' + name + '" περιέχει ' + count + ' αντικείμενα. Τι θέλετε να κάνετε;',
+      t('confirm.deleteCat'),
+      '"' + name + '"' + t('confirm.deleteCatMsg') + count + t('confirm.deleteCatItems'),
       buttons
     );
   } else {
     showConfirm(
-      'Διαγραφή Κατηγορίας',
-      'Θέλετε να διαγράψετε την κατηγορία "' + name + '";',
+      t('confirm.deleteCat'),
+      t('confirm.deleteCatEmpty') + name + '";',
       [
-        { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
-        { label: 'Διαγραφή', cls: 'btn-danger', action: function() { forceDeleteCategory(id, false, null); } }
+        { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+        { label: t('btn.delete'), cls: 'btn-danger', action: function() { forceDeleteCategory(id, false, null); } }
       ]
     );
   }
@@ -1425,11 +1664,11 @@ async function forceDeleteCategory(id, deleteItems, reassignTo) {
     if (deleteItems) body.deleteItems = true;
     if (reassignTo) body.reassignTo = reassignTo;
     await apiPost(body);
-    showToast('Η κατηγορία διαγράφηκε.');
+    showToast(t('toast.catDeleted'));
     await loadAll();
     renderCatList();
   } catch (err) {
-    showToast('Σφάλμα: ' + err.message, true);
+    showToast(t('toast.error') + err.message, true);
   } finally { hideSpinner(); }
 }
 
@@ -1446,9 +1685,9 @@ async function exportData() {
     a.download = 'archeovault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Τα δεδομένα εξήχθησαν.');
+    showToast(t('toast.exported'));
   } catch (err) {
-    showToast('Σφάλμα εξαγωγής: ' + err.message, true);
+    showToast(t('toast.errorExport') + err.message, true);
   } finally { hideSpinner(); }
 }
 
@@ -1457,22 +1696,22 @@ async function importData() {
   if (!file) return;
 
   showConfirm(
-    'Εισαγωγή Δεδομένων',
-    'Αυτή η ενέργεια θα αντικαταστήσει ΟΛΑ τα υπάρχοντα δεδομένα. Συνέχεια;',
+    t('confirm.importTitle'),
+    t('confirm.importMsg'),
     [
-      { label: 'Ακύρωση', cls: 'btn-outline', action: function() { closeModal('confirmModal'); document.getElementById('importFile').value = ''; } },
-      { label: 'Εισαγωγή', cls: 'btn-danger', action: async function() {
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); document.getElementById('importFile').value = ''; } },
+      { label: t('btn.import'), cls: 'btn-danger', action: async function() {
         closeModal('confirmModal');
         showSpinner();
         try {
           var text = await file.text();
           var data = JSON.parse(text);
           await apiPost({ action: 'importAll', categories: data.categories, items: data.items });
-          showToast('Τα δεδομένα εισήχθησαν.');
+          showToast(t('toast.imported'));
           closeModal('exportModal');
           await loadAll();
         } catch (err) {
-          showToast('Σφάλμα εισαγωγής: ' + err.message, true);
+          showToast(t('toast.errorImport') + err.message, true);
         } finally {
           hideSpinner();
           document.getElementById('importFile').value = '';
@@ -1523,19 +1762,39 @@ document.getElementById('searchInput').addEventListener('input', function() {
 
 // ── Init ───────────────────────────────────────────────────
 
+// Restore language preference
+var savedLang = localStorage.getItem('archeovault_lang');
+if (savedLang && (savedLang === 'el' || savedLang === 'en')) {
+  currentLang = savedLang;
+}
+
 if (!API_URL || !GOOGLE_CLIENT_ID) {
+  document.getElementById('configBanner').textContent = t('config.banner');
   document.getElementById('configBanner').style.display = '';
 }
 if (API_URL) {
-  loadAll();
+  loadTranslations().then(function() {
+    applyLanguage();
+    loadAll();
+  });
+} else {
+  applyLanguage();
 }
 
 window.addEventListener('load', function() {
   var restored = restoreAuthFromStorage();
   if (GOOGLE_CLIENT_ID && !restored) initGoogleSignIn();
   if (GOOGLE_CLIENT_ID && restored) {
-    // Still initialize for the sign-in button (hidden but ready if session expires)
     try { initGoogleSignIn(); } catch(e) {}
+  }
+
+  // Seed translations sheet if editor and sheet is empty
+  if (restored && isEditorUser && API_URL) {
+    apiGet({ action: 'getTranslations' }).then(function(data) {
+      if (!data.translations || Object.keys(data.translations).length === 0) {
+        seedTranslations();
+      }
+    }).catch(function() {});
   }
 
   // ── PWA: Inline manifest ──────────────────────────────────

@@ -7,6 +7,7 @@
 const CATEGORIES_SHEET = 'Κατηγορίες';
 const ITEMS_SHEET = 'Αντικείμενα';
 const EDITORS_SHEET = 'Editors';
+const TRANSLATIONS_SHEET = 'Translations';
 
 // ── Auth Helpers ────────────────────────────────────────────
 
@@ -179,6 +180,28 @@ function doGet(e) {
         return jsonResponse({ success: true, isEditor: isEditor(user.email), email: user.email, name: user.name });
       }
 
+      case 'getTranslations': {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        let sheet = ss.getSheetByName(TRANSLATIONS_SHEET);
+        if (!sheet) {
+          return jsonResponse({ success: true, translations: {} });
+        }
+        const data = sheet.getDataRange().getValues();
+        if (data.length < 2) return jsonResponse({ success: true, translations: {} });
+        const headers = data[0]; // key, el, en, ...
+        var result = {};
+        for (var langIdx = 1; langIdx < headers.length; langIdx++) {
+          var lang = String(headers[langIdx]).toLowerCase().trim();
+          if (!lang) continue;
+          result[lang] = {};
+          for (var r = 1; r < data.length; r++) {
+            var key = String(data[r][0]).trim();
+            if (key) result[lang][key] = String(data[r][langIdx] || '');
+          }
+        }
+        return jsonResponse({ success: true, translations: result });
+      }
+
       default:
         return jsonResponse({ success: false, error: 'Unknown action: ' + action });
     }
@@ -341,6 +364,29 @@ function doPost(e) {
         sheet.getRange(row, 4).setValue(body.location);
         sheet.getRange(row, 8).setValue(now);
         return jsonResponse({ success: true, updatedAt: now });
+      }
+
+      case 'seedTranslations': {
+        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var sheet = ss.getSheetByName(TRANSLATIONS_SHEET);
+        if (!sheet) {
+          sheet = ss.insertSheet(TRANSLATIONS_SHEET);
+        }
+        var translations = body.translations; // { key: { el: '...', en: '...' } }
+        var keys = Object.keys(translations);
+        var langs = ['el', 'en'];
+        // Build data array
+        var data = [['key'].concat(langs)];
+        keys.forEach(function(key) {
+          var row = [key];
+          langs.forEach(function(lang) {
+            row.push(translations[key][lang] || '');
+          });
+          data.push(row);
+        });
+        sheet.clear();
+        sheet.getRange(1, 1, data.length, data[0].length).setValues(data);
+        return jsonResponse({ success: true });
       }
 
       case 'importAll': {
