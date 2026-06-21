@@ -197,7 +197,7 @@ body {
   justify-content: center;
   overflow: hidden;
 }
-.card-thumb img {
+.card-thumb img, .card-thumb svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -332,7 +332,7 @@ body {
   overflow: hidden;
   border: 1px solid var(--border);
 }
-.photo-item img {
+.photo-item img, .photo-item svg {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -352,6 +352,41 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── Stock Photo Picker ────────────────────────────────────── */
+.stock-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.stock-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.1s;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stock-thumb:hover {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+.stock-thumb svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* ── Categories List ────────────────────────────────────── */
@@ -535,11 +570,14 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
         <textarea id="itemDescription" placeholder="Πληροφορίες για το αντικείμενο..."></textarea>
       </div>
       <div class="form-group">
-        <label>Φωτογραφίες (Google Drive links)</label>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="photoUrlInput" placeholder="Επικόλληση link φωτογραφίας...">
-          <button class="btn btn-outline" onclick="addPhotoLink()" style="flex-shrink:0">Προσθήκη</button>
+        <label>Φωτογραφίες</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <button class="btn btn-outline btn-sm" onclick="toggleStockPicker()" id="stockPickerBtn" type="button">Επιλογή εικονιδίου</button>
+          <span style="color:var(--text-light);font-size:0.82em;line-height:2">ή</span>
+          <input type="text" id="photoUrlInput" placeholder="Google Drive link..." style="flex:1">
+          <button class="btn btn-outline btn-sm" onclick="addPhotoLink()" type="button">Link</button>
         </div>
+        <div class="stock-picker" id="stockPicker" style="display:none"></div>
         <div class="photo-gallery" id="photoGallery"></div>
       </div>
       <div class="timestamps" id="itemTimestamps" style="display:none"></div>
@@ -938,13 +976,20 @@ function renderItems() {
 
   container.innerHTML = filtered.map(function(it) {
     var photos = (it.photos || '').split(',').filter(Boolean);
-    var thumbUrl = photos.length > 0 ? driveToDirectUrl(photos[0]) : '';
+    var thumbHtml = '';
+    if (photos.length > 0) {
+      if (isStockPhoto(photos[0])) {
+        var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(photos[0]); });
+        thumbHtml = stock ? stock.svg : '<span class="placeholder">🏺</span>';
+      } else {
+        var thumbUrl = driveToDirectUrl(photos[0]);
+        thumbHtml = '<img src="' + thumbUrl + '" alt="" onerror="this.parentElement.innerHTML=\'<span class=placeholder>🏺</span>\'">';
+      }
+    } else {
+      thumbHtml = '<span class="placeholder">🏺</span>';
+    }
     return '<div class="card" onclick="' + (isEditorUser ? 'openItemModal(\'' + it.id + '\')' : 'viewItemDetail(\'' + it.id + '\')') + '">' +
-      '<div class="card-thumb">' +
-        (thumbUrl
-          ? '<img src="' + thumbUrl + '" alt="" onerror="this.parentElement.innerHTML=\'<span class=placeholder>🏺</span>\'">'
-          : '<span class="placeholder">🏺</span>') +
-      '</div>' +
+      '<div class="card-thumb">' + thumbHtml + '</div>' +
       '<div class="card-body">' +
         '<h3>' + escHtml(it.name) + '</h3>' +
         '<div class="card-badges">' +
@@ -1013,6 +1058,10 @@ function viewItemDetail(id) {
   var photosHtml = photos.length > 0
     ? '<div class="photo-gallery" style="margin-top:12px">' +
         photos.map(function(url) {
+          if (isStockPhoto(url)) {
+            var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(url); });
+            return stock ? '<div class="photo-item">' + stock.svg + '</div>' : '';
+          }
           return '<div class="photo-item"><img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'"></div>';
         }).join('') +
       '</div>'
@@ -1133,6 +1182,69 @@ async function deleteCurrentItem() {
   );
 }
 
+// ── Stock Archaeological Illustrations ──────────────────────
+
+var STOCK_IMAGES = [
+  { id: 'amphora', label: 'Αμφορέας', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M48 28h24v6h-24z" fill="#a0522d"/><path d="M45 34c-3 0-5 4-6 10l-4 36c-1 10 3 18 10 22h30c7-4 11-12 10-22l-4-36c-1-6-3-10-6-10z" fill="#c0392b" stroke="#8b2500" stroke-width="1.5"/><path d="M45 34c-3 0-5 4-6 10h42c-1-6-3-10-6-10z" fill="#cd5c5c"/><path d="M42 52h36M42 62h36M42 72h36" stroke="#8b2500" stroke-width="0.8" opacity="0.4"/><path d="M38 42c-6-4-10-2-10 4s4 10 8 12" fill="none" stroke="#8b2500" stroke-width="3" stroke-linecap="round"/><path d="M82 42c6-4 10-2 10 4s-4 10-8 12" fill="none" stroke="#8b2500" stroke-width="3" stroke-linecap="round"/><path d="M50 48l4-6 4 6 4-6 4 6 4-6 4 6" fill="none" stroke="#daa520" stroke-width="1.2"/><ellipse cx="60" cy="90" rx="14" ry="3" fill="#8b2500" opacity="0.15"/></svg>' },
+  { id: 'vase', label: 'Αγγείο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M48 88h24v4H48z" fill="#8b4513"/><path d="M44 88c0 0 2-20 6-32s4-18 2-22h16c-2 4-2 10 2 22s6 32 6 32z" fill="#d2691e" stroke="#8b4513" stroke-width="1.5"/><path d="M52 34h16v4c0 2-4 3-8 3s-8-1-8-3z" fill="#8b4513"/><path d="M50 50c8-2 12-2 20 0" fill="none" stroke="#2c1810" stroke-width="0.8"/><path d="M48 58c8-2 16-2 24 0" fill="none" stroke="#2c1810" stroke-width="0.8"/><circle cx="54" cy="68" r="3" fill="#2c1810" opacity="0.3"/><circle cx="66" cy="68" r="3" fill="#2c1810" opacity="0.3"/><circle cx="60" cy="75" r="3" fill="#2c1810" opacity="0.3"/></svg>' },
+  { id: 'pottery', label: 'Κεραμικό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="85" rx="22" ry="5" fill="#8b4513" opacity="0.15"/><path d="M40 82c0 6 9 10 20 10s20-4 20-10l2-30c0-8-8-16-22-16s-22 8-22 16z" fill="#deb887" stroke="#a0522d" stroke-width="1.5"/><path d="M40 52c0-8 9-16 20-16s20 8 20 16" fill="#e8cfa0" stroke="#a0522d" stroke-width="1.5"/><path d="M44 60h32M44 68h32M44 76h32" stroke="#a0522d" stroke-width="0.6" opacity="0.3" stroke-dasharray="3 3"/><path d="M48 58l3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4" fill="none" stroke="#a0522d" stroke-width="1"/></svg>' },
+  { id: 'statue', label: 'Άγαλμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="42" y="90" width="36" height="6" rx="1" fill="#a0937d"/><rect x="48" y="84" width="24" height="8" rx="1" fill="#b8a99a"/><circle cx="60" cy="38" r="10" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M55 36c0 0 2 2 5 2s5-2 5-2" fill="none" stroke="#8b7d6b" stroke-width="0.8"/><circle cx="56" cy="35" r="1" fill="#8b7d6b"/><circle cx="64" cy="35" r="1" fill="#8b7d6b"/><path d="M56 48l-1 20h-4l-1 16h4l2-16h8l2 16h4l-1-16h-4l-1-20z" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M56 52l-10 10 2 2 10-8" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M64 52l10 10-2 2-10-8" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/></svg>' },
+  { id: 'coin', label: 'Νόμισμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="62" cy="62" rx="28" ry="28" fill="#b8860b" opacity="0.3"/><circle cx="60" cy="60" r="28" fill="#daa520" stroke="#b8860b" stroke-width="2"/><circle cx="60" cy="60" r="24" fill="none" stroke="#b8860b" stroke-width="0.8"/><circle cx="60" cy="60" r="20" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-dasharray="2 2"/><path d="M55 50h10v4h-3v12h3v4h-10v-4h3v-12h-3z" fill="#b8860b" opacity="0.6"/><path d="M48 52c0-4 6-8 12-8s12 4 12 8" fill="none" stroke="#b8860b" stroke-width="0.8"/></svg>' },
+  { id: 'column', label: 'Κίονας', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="40" y="18" width="40" height="6" rx="1" fill="#a0937d"/><rect x="44" y="24" width="32" height="6" fill="#b8a99a"/><rect x="46" y="30" width="28" height="56" fill="#d4c5b0" stroke="#a0937d" stroke-width="0.8"/><line x1="52" y1="30" x2="52" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><line x1="60" y1="30" x2="60" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><line x1="68" y1="30" x2="68" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><rect x="44" y="86" width="32" height="6" fill="#b8a99a"/><rect x="40" y="92" width="40" height="6" rx="1" fill="#a0937d"/><path d="M44 24c2-3 4-5 8-5s4 5 8 5 4-5 8-5 6 2 8 5" fill="none" stroke="#a0937d" stroke-width="0.8"/></svg>' },
+  { id: 'mosaic', label: 'Ψηφιδωτό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="25" y="25" width="70" height="70" rx="2" fill="#e8d5c4" stroke="#a0937d" stroke-width="1"/><rect x="30" y="30" width="12" height="12" fill="#c0392b" rx="1"/><rect x="44" y="30" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="58" y="30" width="12" height="12" fill="#daa520" rx="1"/><rect x="72" y="30" width="12" height="12" fill="#c0392b" rx="1"/><rect x="30" y="44" width="12" height="12" fill="#daa520" rx="1"/><rect x="44" y="44" width="12" height="12" fill="#27ae60" rx="1"/><rect x="58" y="44" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="72" y="44" width="12" height="12" fill="#daa520" rx="1"/><rect x="30" y="58" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="44" y="58" width="12" height="12" fill="#c0392b" rx="1"/><rect x="58" y="58" width="12" height="12" fill="#27ae60" rx="1"/><rect x="72" y="58" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="30" y="72" width="12" height="12" fill="#c0392b" rx="1"/><rect x="44" y="72" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="58" y="72" width="12" height="12" fill="#daa520" rx="1"/><rect x="72" y="72" width="12" height="12" fill="#c0392b" rx="1"/></svg>' },
+  { id: 'helmet', label: 'Κράνος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M36 72c0-20 10-40 24-42s24 22 24 42c0 4-2 8-6 10H42c-4-2-6-6-6-10z" fill="#b8860b" stroke="#8b6914" stroke-width="1.5"/><path d="M40 72c0-18 8-34 20-36s20 18 20 36" fill="#daa520" stroke="#8b6914" stroke-width="1"/><path d="M58 30c0-6 1-10 2-12s2 6 2 12" fill="#cd853f" stroke="#8b6914" stroke-width="1"/><path d="M56 18c2-4 4-4 8 0" fill="none" stroke="#8b6914" stroke-width="1.5" stroke-linecap="round"/><path d="M42 68h36" stroke="#8b6914" stroke-width="1.5"/><path d="M40 74l-4 8h8zM80 74l4 8h-8z" fill="#b8860b" stroke="#8b6914" stroke-width="0.8"/><rect x="44" y="72" width="8" height="12" rx="3" fill="#2c1810" opacity="0.5"/><rect x="68" y="72" width="8" height="12" rx="3" fill="#2c1810" opacity="0.5"/></svg>' },
+  { id: 'sword', label: 'Ξίφος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M58 16l2-2 2 2v58h-4z" fill="#a8a8a8" stroke="#707070" stroke-width="0.8"/><path d="M59 16l1-2 1 2v58h-2z" fill="#c0c0c0"/><rect x="46" y="74" width="28" height="5" rx="2" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/><rect x="56" y="79" width="8" height="16" rx="2" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/><circle cx="60" cy="87" r="2" fill="#daa520"/><path d="M54 95h12l-2 6h-8z" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/></svg>' },
+  { id: 'scroll', label: 'Πάπυρος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M30 30c4-4 6-2 6 4v52c0 6-2 8-6 4" fill="#d2b48c" stroke="#a0522d" stroke-width="1"/><path d="M90 30c-4-4-6-2-6 4v52c0 6 2 8 6 4" fill="#d2b48c" stroke="#a0522d" stroke-width="1"/><rect x="36" y="30" width="48" height="60" fill="#f5deb3" stroke="#a0522d" stroke-width="0.8"/><line x1="42" y1="40" x2="78" y2="40" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="48" x2="78" y2="48" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="56" x2="78" y2="56" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="64" x2="70" y2="64" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="72" x2="74" y2="72" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="80" x2="60" y2="80" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/></svg>' },
+  { id: 'jewelry', label: 'Κόσμημα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="52" rx="30" ry="28" fill="none" stroke="#daa520" stroke-width="3"/><ellipse cx="60" cy="52" rx="26" ry="24" fill="none" stroke="#b8860b" stroke-width="1"/><circle cx="60" cy="80" r="8" fill="#c0392b" stroke="#8b2500" stroke-width="1"/><circle cx="60" cy="80" r="5" fill="#e74c3c"/><circle cx="60" cy="24" r="4" fill="#daa520" stroke="#b8860b" stroke-width="0.8"/><circle cx="38" cy="36" r="3" fill="#daa520"/><circle cx="82" cy="36" r="3" fill="#daa520"/><circle cx="32" cy="56" r="3" fill="#daa520"/><circle cx="88" cy="56" r="3" fill="#daa520"/><path d="M52 80l8-10 8 10" fill="none" stroke="#daa520" stroke-width="1.5"/></svg>' },
+  { id: 'lamp', label: 'Λυχνάρι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="76" rx="24" ry="8" fill="#a0522d" opacity="0.15"/><path d="M38 68c-2-4-2-10 2-14s12-8 20-8 16 4 20 8 4 10 2 14z" fill="#d2691e" stroke="#8b4513" stroke-width="1.5"/><path d="M38 68c4 4 12 6 22 6s18-2 22-6" fill="#c0792b" stroke="#8b4513" stroke-width="1"/><path d="M32 66h-6c-2 0-3-2-2-4l4-4h6" fill="#d2691e" stroke="#8b4513" stroke-width="1"/><path d="M88 66h6c2 0 3-1 3-3l-2-4h-6" fill="#d2691e" stroke="#8b4513" stroke-width="1"/><path d="M58 46c0-6 1-10 2-14" fill="none" stroke="#e8a020" stroke-width="2" stroke-linecap="round"/><path d="M56 30c2-4 4-6 4-6s2 2 4 6c2 3 0 6-4 6s-6-3-4-6z" fill="#f4a020" opacity="0.7"/></svg>' },
+  { id: 'bone', label: 'Οστό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M32 40c-4-6-2-14 4-16s12 2 14 8l20 36c2 6 8 10 14 8s8-10 4-16" fill="none" stroke="#a0937d" stroke-width="4" stroke-linecap="round"/><circle cx="34" cy="36" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="42" cy="30" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="82" cy="82" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="88" cy="74" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><path d="M38 34l30 48" stroke="#d4c5b0" stroke-width="6" stroke-linecap="round"/></svg>' },
+  { id: 'tool', label: 'Εργαλείο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M40 28l20 50" stroke="#8b4513" stroke-width="5" stroke-linecap="round"/><path d="M34 24c2-4 8-6 12-2l-6 14c-6 0-8-8-6-12z" fill="#a8a8a8" stroke="#707070" stroke-width="1"/><path d="M70 34l16 48" stroke="#8b4513" stroke-width="4" stroke-linecap="round"/><path d="M66 30l8-6 4 4-6 8z" fill="#a8a8a8" stroke="#707070" stroke-width="1"/><path d="M56 90h8v6h-8z" fill="#8b4513"/><path d="M48 88h24l-2 6H50z" fill="#a0522d" stroke="#6b3410" stroke-width="0.8"/></svg>' },
+  { id: 'tile', label: 'Πλακίδιο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="28" y="34" width="64" height="52" rx="3" fill="#d2b48c" stroke="#a0522d" stroke-width="1.5"/><rect x="32" y="38" width="56" height="44" rx="1" fill="#e8d5c4"/><path d="M44 48l16 12-16 12z" fill="#c0392b" opacity="0.5"/><path d="M76 48l-16 12 16 12z" fill="#2c3e50" opacity="0.5"/><path d="M60 44v32" stroke="#a0522d" stroke-width="0.6" opacity="0.3"/><path d="M40 60h40" stroke="#a0522d" stroke-width="0.6" opacity="0.3"/></svg>' },
+  { id: 'jar', label: 'Πιθάρι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="90" rx="20" ry="4" fill="#8b4513" opacity="0.15"/><path d="M44 88c-6-6-10-18-10-30s4-22 10-26h32c6 4 10 14 10 26s-4 24-10 30z" fill="#b8860b" stroke="#8b6914" stroke-width="1.5"/><ellipse cx="60" cy="32" rx="16" ry="5" fill="#daa520" stroke="#8b6914" stroke-width="1"/><path d="M42 50h36" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/><path d="M38 64h44" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/><path d="M40 78h40" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/></svg>' },
+  { id: 'mask', label: 'Μάσκα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M36 40c0-12 10-22 24-22s24 10 24 22v20c0 16-10 28-24 28s-24-12-24-28z" fill="#daa520" stroke="#b8860b" stroke-width="1.5"/><ellipse cx="48" cy="48" rx="8" ry="6" fill="#2c1810" opacity="0.6"/><ellipse cx="72" cy="48" rx="8" ry="6" fill="#2c1810" opacity="0.6"/><ellipse cx="48" cy="48" rx="6" ry="4" fill="#f5ebe0" opacity="0.3"/><ellipse cx="72" cy="48" rx="6" ry="4" fill="#f5ebe0" opacity="0.3"/><path d="M52 66c4 4 12 4 16 0" fill="none" stroke="#8b6914" stroke-width="1.5" stroke-linecap="round"/><path d="M56 56l4 4 4-4" fill="none" stroke="#8b6914" stroke-width="1.2"/></svg>' },
+  { id: 'shield', label: 'Ασπίδα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M60 18c-20 4-32 10-32 20 0 24 14 48 32 62 18-14 32-38 32-62 0-10-12-16-32-20z" fill="#8b4513" stroke="#5c3310" stroke-width="1.5"/><path d="M60 24c-16 4-26 8-26 16 0 20 12 40 26 52 14-12 26-32 26-52 0-8-10-12-26-16z" fill="#a0522d"/><circle cx="60" cy="54" r="14" fill="none" stroke="#daa520" stroke-width="2"/><circle cx="60" cy="54" r="8" fill="#daa520" opacity="0.4"/><path d="M60 28v56" stroke="#daa520" stroke-width="1" opacity="0.4"/><path d="M38 54h44" stroke="#daa520" stroke-width="1" opacity="0.4"/></svg>' },
+  { id: 'fragment', label: 'Θραύσμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M35 40l15-8 12 6 18-4 8 12-4 18 6 14-10 8-16-2-12 6-14-10 2-16-8-12z" fill="#d2b48c" stroke="#a0522d" stroke-width="1.5" stroke-linejoin="round"/><path d="M50 42l8 20-12 14" fill="none" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><path d="M65 38l-4 22 14 10" fill="none" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><circle cx="55" cy="55" r="2" fill="#a0522d" opacity="0.3"/><circle cx="65" cy="62" r="1.5" fill="#a0522d" opacity="0.3"/></svg>' },
+  { id: 'ring', label: 'Δαχτυλίδι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="64" rx="26" ry="22" fill="none" stroke="#daa520" stroke-width="6"/><ellipse cx="60" cy="64" rx="26" ry="22" fill="none" stroke="#b8860b" stroke-width="2"/><ellipse cx="60" cy="42" rx="10" ry="8" fill="#daa520" stroke="#b8860b" stroke-width="1.5"/><circle cx="60" cy="40" r="5" fill="#27ae60" stroke="#1a7a3a" stroke-width="0.8"/><circle cx="60" cy="39" r="2" fill="#2ecc71" opacity="0.6"/></svg>' }
+];
+
+function getStockSvgDataUri(stockId) {
+  var stock = STOCK_IMAGES.find(function(s) { return s.id === stockId; });
+  if (!stock) return '';
+  return 'data:image/svg+xml,' + encodeURIComponent(stock.svg);
+}
+
+function toggleStockPicker() {
+  var picker = document.getElementById('stockPicker');
+  if (picker.style.display === 'none') {
+    picker.style.display = '';
+    renderStockPicker();
+  } else {
+    picker.style.display = 'none';
+  }
+}
+
+function renderStockPicker() {
+  var picker = document.getElementById('stockPicker');
+  picker.innerHTML = STOCK_IMAGES.map(function(s) {
+    return '<div class="stock-thumb" onclick="selectStockImage(\'' + s.id + '\')" title="' + escHtml(s.label) + '">' + s.svg + '</div>';
+  }).join('');
+}
+
+function selectStockImage(stockId) {
+  var uri = 'stock:' + stockId;
+  currentPhotos.push(uri);
+  renderPhotoGallery();
+  document.getElementById('stockPicker').style.display = 'none';
+}
+
+function isStockPhoto(url) {
+  return url && url.indexOf('stock:') === 0;
+}
+
+function getStockId(url) {
+  return url.replace('stock:', '');
+}
+
 // ── Photo Gallery ──────────────────────────────────────────
 
 function addPhotoLink() {
@@ -1156,6 +1268,14 @@ function renderPhotoGallery() {
     return;
   }
   gallery.innerHTML = currentPhotos.map(function(url, i) {
+    if (isStockPhoto(url)) {
+      var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(url); });
+      if (!stock) return '';
+      return '<div class="photo-item">' +
+        stock.svg +
+        '<button class="remove-photo" onclick="event.stopPropagation();removePhoto(' + i + ')">✕</button>' +
+      '</div>';
+    }
     return '<div class="photo-item">' +
       '<img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'">' +
       '<button class="remove-photo" onclick="event.stopPropagation();removePhoto(' + i + ')">✕</button>' +
