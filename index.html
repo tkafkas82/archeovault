@@ -1763,9 +1763,15 @@ document.getElementById('searchInput').addEventListener('input', function() {
 // ── Init ───────────────────────────────────────────────────
 
 // Restore language preference
-var savedLang = localStorage.getItem('archeovault_lang');
-if (savedLang && (savedLang === 'el' || savedLang === 'en')) {
-  currentLang = savedLang;
+var urlLang = new URLSearchParams(window.location.search).get('lang');
+if (urlLang && (urlLang === 'el' || urlLang === 'en')) {
+  currentLang = urlLang;
+  localStorage.setItem('archeovault_lang', urlLang);
+} else {
+  var savedLang = localStorage.getItem('archeovault_lang');
+  if (savedLang && (savedLang === 'el' || savedLang === 'en')) {
+    currentLang = savedLang;
+  }
 }
 
 if (!API_URL || !GOOGLE_CLIENT_ID) {
