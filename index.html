@@ -13,6 +13,7 @@
 <meta name="theme-color" content="#2c1810">
 <link rel="manifest" href="manifest.json">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 <style>
 /* ── CSS Variables ──────────────────────────────────────── */
 :root {
@@ -507,20 +508,12 @@ body {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.splash-logo .arch-path path {
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  animation: drawSnake 1.6s ease-out forwards;
+.splash-logo .arch-path {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawArch 1.4s ease-out 0.3s forwards;
 }
-.splash-logo .arch-path path:nth-child(1) { animation-delay: 0.2s; }
-.splash-logo .arch-path path:nth-child(2) { animation-delay: 0.3s; }
-.splash-logo .arch-path path:nth-child(3) { animation-delay: 0.4s; }
-.splash-logo .arch-path path:nth-child(4) { animation-delay: 0.25s; }
-.splash-logo .arch-path path:nth-child(5) { animation-delay: 0.35s; }
-.splash-logo .arch-path path:nth-child(6) { animation-delay: 0.45s; }
-.splash-logo .arch-path path:nth-child(7) { animation-delay: 0.15s; }
-.splash-logo .arch-path path:nth-child(8) { animation-delay: 0.1s; }
-@keyframes drawSnake {
+@keyframes drawArch {
   to { stroke-dashoffset: 0; }
 }
 
@@ -534,11 +527,12 @@ body {
 }
 
 .splash-logo .ground-line {
-  opacity: 0;
-  animation: fadeInBorder 1s ease-out 1.4s forwards;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: drawGround 0.6s ease-out 1.2s forwards;
 }
-@keyframes fadeInBorder {
-  to { opacity: 0.4; }
+@keyframes drawGround {
+  to { stroke-dashoffset: 0; }
 }
 
 .splash-title {
@@ -707,64 +701,25 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
           <stop offset="0%" stop-color="#6b4a30"/>
           <stop offset="100%" stop-color="#4a3020"/>
         </linearGradient>
-        <linearGradient id="splashGold" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="splashArch" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#e8c9a0"/>
           <stop offset="100%" stop-color="#d4a86a"/>
         </linearGradient>
-        <radialGradient id="splashFace" cx="0.5" cy="0.4" r="0.5">
-          <stop offset="0%" stop-color="#f0dcc0"/>
-          <stop offset="100%" stop-color="#c4a67a"/>
-        </radialGradient>
+        <linearGradient id="splashAmph" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c0392b"/>
+          <stop offset="100%" stop-color="#96281b"/>
+        </linearGradient>
       </defs>
       <circle cx="256" cy="256" r="240" fill="url(#splashBg)"/>
-      <!-- Snakes - drawn with stroke-dasharray animation -->
-      <g class="arch-path" fill="none" stroke="url(#splashGold)" stroke-width="6" stroke-linecap="round">
-        <!-- Left snakes -->
-        <path d="M160 140 Q120 160 130 200 Q140 240 110 260 Q80 280 90 320"/>
-        <path d="M185 120 Q150 150 155 190 Q160 230 135 255 Q110 280 115 310 Q120 340 100 360"/>
-        <path d="M210 110 Q185 140 190 175 Q195 210 170 240 Q150 265 155 300 Q160 330 140 355"/>
-        <!-- Right snakes -->
-        <path d="M352 140 Q392 160 382 200 Q372 240 402 260 Q432 280 422 320"/>
-        <path d="M327 120 Q362 150 357 190 Q352 230 377 255 Q402 280 397 310 Q392 340 412 360"/>
-        <path d="M302 110 Q327 140 322 175 Q317 210 342 240 Q362 265 357 300 Q352 330 372 355"/>
-        <!-- Top snakes -->
-        <path d="M230 100 Q220 60 240 40 Q256 25 272 40 Q292 60 282 100"/>
-        <path d="M215 108 Q195 55 220 30 Q256 10 292 30 Q317 55 297 108"/>
-      </g>
-      <!-- Snake heads (small diamonds) -->
-      <g class="amphora-body" fill="#e8c9a0">
-        <polygon points="90,315 85,322 90,329 95,322"/>
-        <polygon points="100,356 95,363 100,370 105,363"/>
-        <polygon points="140,350 135,357 140,364 145,357"/>
-        <polygon points="422,315 417,322 422,329 427,322"/>
-        <polygon points="412,356 407,363 412,370 417,363"/>
-        <polygon points="372,350 367,357 372,364 377,357"/>
-        <polygon points="240,35 235,40 240,45 245,40"/>
-        <polygon points="272,35 267,40 272,45 277,40"/>
-      </g>
-      <!-- Face -->
+      <path class="arch-path" d="M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400" fill="none" stroke="url(#splashArch)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
       <g class="amphora-body">
-        <ellipse cx="256" cy="250" rx="75" ry="90" fill="url(#splashFace)"/>
-        <!-- Eyes -->
-        <ellipse cx="225" cy="230" rx="18" ry="12" fill="#fff" opacity="0.9"/>
-        <ellipse cx="287" cy="230" rx="18" ry="12" fill="#fff" opacity="0.9"/>
-        <circle cx="225" cy="230" r="7" fill="#2c1810"/>
-        <circle cx="287" cy="230" r="7" fill="#2c1810"/>
-        <circle cx="227" cy="228" r="2.5" fill="#fff"/>
-        <circle cx="289" cy="228" r="2.5" fill="#fff"/>
-        <!-- Eyebrows -->
-        <path d="M205 212 Q225 200 245 212" fill="none" stroke="#8b6914" stroke-width="3.5" stroke-linecap="round"/>
-        <path d="M267 212 Q287 200 307 212" fill="none" stroke="#8b6914" stroke-width="3.5" stroke-linecap="round"/>
-        <!-- Nose -->
-        <path d="M256 238 L250 268 Q253 273 256 273 Q259 273 262 268 L256 238" fill="none" stroke="#b8956a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Mouth -->
-        <path d="M232 290 Q244 300 256 298 Q268 300 280 290" fill="none" stroke="#a07050" stroke-width="3" stroke-linecap="round"/>
-        <!-- Decorative forehead piece -->
-        <path d="M220 170 Q238 155 256 158 Q274 155 292 170" fill="none" stroke="#d4a86a" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="256" cy="160" r="6" fill="#d4a86a"/>
+        <polygon points="256,88 240,120 272,120" fill="#e8c9a0"/>
+        <path d="M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z" fill="url(#splashAmph)" opacity="0.95"/>
+        <ellipse cx="250" cy="300" rx="14" ry="35" fill="#d44" opacity="0.3"/>
+        <path d="M220 210 Q196 230 210 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M292 210 Q316 230 302 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
       </g>
-      <!-- Circular border -->
-      <circle class="ground-line" cx="256" cy="256" r="230" fill="none" stroke="#e8c9a0" stroke-width="4" stroke-dasharray="12 8" opacity="0.4"/>
+      <line class="ground-line" x1="100" y1="400" x2="412" y2="400" stroke="#e8c9a0" stroke-width="12" stroke-linecap="round"/>
     </svg>
     <div class="splash-title">ArcheoVault</div>
     <div class="splash-subtitle">Θησαυροί του Χρόνου</div>
