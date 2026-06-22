@@ -1182,6 +1182,7 @@ function handleCredentialResponse(response) {
     isEditorUser = data.isEditor || false;
     updateAuthUI();
     saveAuthToStorage();
+    dismissSplash();
     if (isEditorUser) {
       showToast(t('auth.loginEditor') + authUser.email);
     } else {
@@ -1191,6 +1192,7 @@ function handleCredentialResponse(response) {
     isEditorUser = false;
     updateAuthUI();
     saveAuthToStorage();
+    dismissSplash();
   });
 }
 
