@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%236b4a30'/%3E%3Cstop offset='100%25' stop-color='%234a3020'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23bg)'/%3E%3Cpath d='M14 54 L14 28 Q14 12 32 9 Q50 12 50 28 L50 54' fill='none' stroke='%23e8c9a0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M28 22 Q26 22 26 24 L25 42 Q25 48 30 50 L29 52 Q28 53 30 54 L34 54 Q36 53 35 52 L34 50 Q39 48 39 42 L38 24 Q38 22 36 22 Z' fill='%23c0392b'/%3E%3Cpath d='M26 25 Q22 30 25 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M38 25 Q42 30 39 35' fill='none' stroke='%23c0392b' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='10' y1='54' x2='54' y2='54' stroke='%23e8c9a0' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>ArcheoVault — Αρχαιολογική Αποθήκη</title>
+<!-- PWA: iOS meta tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ArcheoVault">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%236b4a30'/%3E%3Cstop offset='100%25' stop-color='%234a3020'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='90' fill='url(%23b)'/%3E%3Cpath d='M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400' fill='none' stroke='%23e8c9a0' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z' fill='%23c0392b'/%3E%3Cpath d='M220 210 Q196 230 210 260' fill='none' stroke='%23c0392b' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M292 210 Q316 230 302 260' fill='none' stroke='%23c0392b' stroke-width='10' stroke-linecap='round'/%3E%3Cline x1='100' y1='400' x2='412' y2='400' stroke='%23e8c9a0' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#2c1810">
+<link rel="manifest" href="manifest.json">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+/* ── CSS Variables ──────────────────────────────────────── */
+:root {
+  --bg: #f5f0e8;
+  --bg-card: #ffffff;
+  --bg-header: #5c4033;
+  --bg-modal: #ffffff;
+  --bg-overlay: rgba(0,0,0,0.45);
+  --bg-input: #faf8f4;
+  --text: #2c1810;
+  --text-light: #6b5b4f;
+  --text-inv: #faf8f4;
+  --accent: #b85c38;
+  --accent-hover: #a04e2e;
+  --accent2: #4a7c59;
+  --border: #d4c5b0;
+  --badge-cat: #e8d5c4;
+  --badge-loc: #c4d5c8;
+  --shadow: 0 2px 8px rgba(44,24,16,0.10);
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Reset & Base ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  background: var(--bg-header);
+  color: var(--text-inv);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.header h1 {
+  font-size: 1.3em;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+}
+.header-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9em;
+  background: rgba(255,255,255,0.15);
+  color: var(--text-inv);
+  outline: none;
+}
+.header-search::placeholder { color: rgba(255,255,255,0.5); }
+.header-search:focus { background: rgba(255,255,255,0.25); }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--text-inv); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: rgba(255,255,255,0.15); color: var(--text-inv); }
+.btn-secondary:hover { background: rgba(255,255,255,0.25); }
+.btn-green { background: var(--accent2); color: var(--text-inv); }
+.btn-green:hover { background: #3d6a4a; }
+.btn-danger { background: #c0392b; color: #fff; }
+.btn-danger:hover { background: #a93226; }
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: var(--bg); }
+.btn-sm { padding: 4px 10px; font-size: 0.78em; }
+
+/* ── Auth UI ───────────────────────────────────────────── */
+.auth-area { display: flex; align-items: center; gap: 8px; }
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  font-size: 0.82em;
+  transition: background 0.15s;
+}
+.user-chip:hover { background: rgba(255,255,255,0.25); }
+.user-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+.user-chip .user-name { color: var(--text-inv); }
+.editor-badge {
+  background: var(--accent2);
+  color: #fff;
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
+.readonly-badge {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
+
+/* ── Filter Bar ─────────────────────────────────────────── */
+.filter-bar {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.filter-bar select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  background: var(--bg-input);
+  color: var(--text);
+}
+.filter-bar .item-count {
+  margin-left: auto;
+  font-size: 0.85em;
+  color: var(--text-light);
+}
+
+/* ── Cards Grid ─────────────────────────────────────────── */
+.cards-container {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid var(--border);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(44,24,16,0.15);
+}
+.card-thumb {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, #e8d5c4 0%, #d4c5b0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.card-thumb img, .card-thumb svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.card-thumb .placeholder {
+  font-size: 3em;
+  opacity: 0.3;
+}
+.card-body { padding: 14px; }
+.card-body h3 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+.badge-cat { background: var(--badge-cat); color: #6b4226; }
+.badge-loc { background: var(--badge-loc); color: #2d5a3b; }
+
+/* ── Empty State ────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-light);
+  grid-column: 1 / -1;
+}
+.empty-state .icon { font-size: 4em; margin-bottom: 16px; opacity: 0.3; }
+.empty-state h2 { font-size: 1.2em; margin-bottom: 8px; }
+.empty-state p { font-size: 0.9em; margin-bottom: 20px; }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: 200;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-modal);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 600px;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h2 { font-size: 1.1em; }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4em;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px;
+  line-height: 1;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Form ───────────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-light);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9em;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font);
+}
+.form-group textarea { min-height: 80px; resize: vertical; }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(184,92,56,0.15);
+}
+
+/* ── Photo Gallery ──────────────────────────────────────── */
+.photo-gallery {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.photo-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.photo-item img, .photo-item svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-item .remove-photo {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Stock Photo Picker ────────────────────────────────────── */
+.stock-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.stock-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.1s;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stock-thumb:hover {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+.stock-thumb svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Categories List ────────────────────────────────────── */
+.cat-list { list-style: none; }
+.cat-list li {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.cat-list li:last-child { border-bottom: none; }
+.cat-info { display: flex; align-items: center; gap: 10px; }
+.cat-count {
+  font-size: 0.8em;
+  color: var(--text-light);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.cat-actions { display: flex; gap: 4px; }
+.cat-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9em;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--text-light);
+}
+.cat-actions button:hover { background: var(--bg); color: var(--text); }
+
+/* ── Timestamps ─────────────────────────────────────────── */
+.timestamps {
+  font-size: 0.78em;
+  color: var(--text-light);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Loading Spinner ────────────────────────────────────── */
+.spinner-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+.spinner-overlay.active { display: flex; }
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Splash Screen ─────────────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #5c4033 0%, #3a2518 40%, #2c1810 100%);
+  overflow: hidden;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.splash.fade-out {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+}
+.splash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(184,92,56,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 70% 80%, rgba(74,60,40,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.splash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0v60M0 30h60' stroke='%23e8c9a0' stroke-width='0.3' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.splash-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.splash-logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 28px;
+  filter: drop-shadow(0 4px 24px rgba(0,0,0,0.4));
+  animation: splashLogoIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+@keyframes splashLogoIn {
+  0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.splash-logo .arch-path {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawArch 1.4s ease-out 0.3s forwards;
+}
+@keyframes drawArch {
+  to { stroke-dashoffset: 0; }
+}
+
+.splash-logo .amphora-body {
+  opacity: 0;
+  animation: amphoraIn 0.8s ease-out 0.9s forwards;
+}
+@keyframes amphoraIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 0.95; transform: translateY(0); }
+}
+
+.splash-logo .ground-line {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: drawGround 0.6s ease-out 1.2s forwards;
+}
+@keyframes drawGround {
+  to { stroke-dashoffset: 0; }
+}
+
+.splash-title {
+  font-family: var(--font);
+  font-size: 2.4em;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #e8c9a0;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: titleIn 0.8s ease-out 0.6s forwards;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+}
+@keyframes titleIn {
+  0% { opacity: 0; letter-spacing: 12px; }
+  100% { opacity: 1; letter-spacing: 3px; }
+}
+
+.splash-subtitle {
+  font-family: var(--font);
+  font-size: 0.92em;
+  color: rgba(232,201,160,0.5);
+  letter-spacing: 2px;
+  margin-top: 8px;
+  opacity: 0;
+  animation: subtitleIn 0.6s ease-out 1s forwards;
+}
+@keyframes subtitleIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.splash-loader {
+  margin-top: 48px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  animation: loaderIn 0.4s ease-out 1.4s forwards;
+}
+@keyframes loaderIn {
+  to { opacity: 1; }
+}
+.splash-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e8c9a0;
+  opacity: 0.3;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.splash-dot:nth-child(2) { animation-delay: 0.2s; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.4); }
+}
+
+.splash-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.splash-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #e8c9a0;
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleFloat 4s ease-in-out infinite;
+}
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0); }
+  20% { opacity: 0.15; transform: translateY(-20px) scale(1); }
+  80% { opacity: 0.05; transform: translateY(-80px) scale(0.5); }
+  100% { opacity: 0; transform: translateY(-100px) scale(0); }
+}
+
+@media (max-width: 600px) {
+  .splash-logo { width: 90px; height: 90px; margin-bottom: 20px; }
+  .splash-title { font-size: 1.6em; letter-spacing: 2px; }
+  @keyframes titleIn {
+    0% { opacity: 0; letter-spacing: 8px; }
+    100% { opacity: 1; letter-spacing: 2px; }
+  }
+  .splash-subtitle { font-size: 0.78em; }
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg-header);
+  color: var(--text-inv);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 0.9em;
+  z-index: 400;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.toast.active { transform: translateX(-50%) translateY(0); }
+.toast.error { background: #c0392b; }
+
+/* ── Config Banner ──────────────────────────────────────── */
+.config-banner {
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 0.9em;
+}
+.config-banner code {
+  background: rgba(0,0,0,0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* ── Language Toggle ────────────────────────────────────── */
+.lang-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: var(--text-inv);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.78em;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.lang-toggle:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header { padding: 10px 12px; gap: 10px; }
+  .header h1 { font-size: 1.1em; }
+  .cards-container { padding: 12px; gap: 12px; grid-template-columns: 1fr; }
+  .modal { margin: 10px; }
+  .user-chip .user-name { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     CONFIGURATION
+     ══════════════════════════════════════════════════════════ -->
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbzBY5Uj1keSc0HPjC-ucQiomp_cfbbLxR-_Fb9InbdSUWzEByIrnHIuISzz_fPzdqllVw/exec';         // <-- PASTE YOUR APPS SCRIPT WEB APP URL HERE
+const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.googleusercontent.com'; // <-- PASTE YOUR GOOGLE CLOUD OAUTH CLIENT ID HERE
+</script>
+
+<!-- ── Splash Screen ────────────────────────────────────── -->
+<div class="splash" id="splashScreen">
+  <div class="splash-particles" id="splashParticles"></div>
+  <div class="splash-content">
+    <svg class="splash-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="splashBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6b4a30"/>
+          <stop offset="100%" stop-color="#4a3020"/>
+        </linearGradient>
+        <linearGradient id="splashArch" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e8c9a0"/>
+          <stop offset="100%" stop-color="#d4a86a"/>
+        </linearGradient>
+        <linearGradient id="splashAmph" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c0392b"/>
+          <stop offset="100%" stop-color="#96281b"/>
+        </linearGradient>
+      </defs>
+      <circle cx="256" cy="256" r="240" fill="url(#splashBg)"/>
+      <path class="arch-path" d="M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400" fill="none" stroke="url(#splashArch)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+      <g class="amphora-body">
+        <polygon points="256,88 240,120 272,120" fill="#e8c9a0"/>
+        <path d="M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z" fill="url(#splashAmph)" opacity="0.95"/>
+        <ellipse cx="250" cy="300" rx="14" ry="35" fill="#d44" opacity="0.3"/>
+        <path d="M220 210 Q196 230 210 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M292 210 Q316 230 302 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <line class="ground-line" x1="100" y1="400" x2="412" y2="400" stroke="#e8c9a0" stroke-width="12" stroke-linecap="round"/>
+    </svg>
+    <div class="splash-title">ArcheoVault</div>
+    <div class="splash-subtitle">Φύλακες του Παρελθόντος</div>
+    <div class="splash-loader">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loading Spinner ──────────────────────────────────── -->
+<div class="spinner-overlay" id="spinner"><div class="spinner"></div></div>
+
+<!-- ── Toast ─────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Config Banner ─────────────────────────────────────── -->
+<div class="config-banner" id="configBanner" style="display:none"></div>
+
+<!-- ── Header ────────────────────────────────────────────── -->
+<header class="header">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="height:36px;width:36px;border-radius:6px;flex-shrink:0"><defs><linearGradient id="lbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6b4a30"/><stop offset="100%" stop-color="#4a3020"/></linearGradient><linearGradient id="larch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8c9a0"/><stop offset="100%" stop-color="#d4a86a"/></linearGradient><linearGradient id="lamph" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c0392b"/><stop offset="100%" stop-color="#96281b"/></linearGradient></defs><circle cx="256" cy="256" r="240" fill="url(#lbg)"/><path d="M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400" fill="none" stroke="url(#larch)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/><polygon points="256,88 240,120 272,120" fill="#e8c9a0"/><path d="M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z" fill="url(#lamph)" opacity="0.95"/><ellipse cx="250" cy="300" rx="14" ry="35" fill="#d44" opacity="0.3"/><path d="M220 210 Q196 230 210 260" fill="none" stroke="url(#lamph)" stroke-width="10" stroke-linecap="round"/><path d="M292 210 Q316 230 302 260" fill="none" stroke="url(#lamph)" stroke-width="10" stroke-linecap="round"/><line x1="100" y1="400" x2="412" y2="400" stroke="#e8c9a0" stroke-width="12" stroke-linecap="round"/></svg>
+  <h1>ArcheoVault</h1>
+  <input type="text" class="header-search" id="searchInput" placeholder="Αναζήτηση αντικειμένων...">
+  <div class="header-actions">
+    <button class="btn btn-primary editor-only" onclick="openItemModal()" style="display:none">+ Αντικείμενο</button>
+    <button class="btn btn-secondary editor-only" onclick="openCategoriesModal()" style="display:none">Κατηγορίες</button>
+    <button class="btn btn-secondary editor-only" onclick="openExportModal()" style="display:none">Εξαγωγή / Εισαγωγή</button>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLanguage()">EN</button>
+    <div class="auth-area" id="authArea">
+      <div id="googleSignInBtn"></div>
+      <div id="userChip" style="display:none"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Filter Bar ────────────────────────────────────────── -->
+<div class="filter-bar">
+  <select id="filterCategory" onchange="renderItems()">
+    <option value="">Όλες οι κατηγορίες</option>
+  </select>
+  <select id="filterLocation" onchange="renderItems()">
+    <option value="">Όλες οι τοποθεσίες</option>
+  </select>
+  <span class="item-count" id="itemCount"></span>
+</div>
+
+<!-- ── Cards Grid ────────────────────────────────────────── -->
+<div class="cards-container" id="cardsContainer"></div>
+
+<!-- ── Item Modal ────────────────────────────────────────── -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal" style="max-width:650px">
+    <div class="modal-header">
+      <h2 id="itemModalTitle">Νέο Αντικείμενο</h2>
+      <button class="modal-close" onclick="closeModal('itemModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="itemId">
+      <div class="form-group">
+        <label>Όνομα *</label>
+        <input type="text" id="itemName" placeholder="π.χ. Αμφορέας Τύπου Α">
+      </div>
+      <div class="form-group">
+        <label>Κατηγορία *</label>
+        <select id="itemCategory"></select>
+      </div>
+      <div class="form-group">
+        <label>Τοποθεσία</label>
+        <input type="text" id="itemLocation" placeholder="π.χ. Ράφι 15">
+      </div>
+      <div class="form-group">
+        <label>Περιγραφή</label>
+        <textarea id="itemDescription" placeholder="Πληροφορίες για το αντικείμενο..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Φωτογραφίες</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <button class="btn btn-outline btn-sm" onclick="toggleStockPicker()" id="stockPickerBtn" type="button">Επιλογή εικονιδίου</button>
+          <span style="color:var(--text-light);font-size:0.82em;line-height:2">ή</span>
+          <input type="text" id="photoUrlInput" placeholder="Google Drive link..." style="flex:1">
+          <button class="btn btn-outline btn-sm" onclick="addPhotoLink()" type="button">Link</button>
+        </div>
+        <div class="stock-picker" id="stockPicker" style="display:none"></div>
+        <div class="photo-gallery" id="photoGallery"></div>
+      </div>
+      <div class="timestamps" id="itemTimestamps" style="display:none"></div>
+    </div>
+    <div class="modal-footer" id="itemModalFooter">
+      <button class="btn btn-danger" id="deleteItemBtn" onclick="deleteCurrentItem()" style="margin-right:auto;display:none">Διαγραφή</button>
+      <button class="btn btn-outline" onclick="closeModal('itemModal')">Ακύρωση</button>
+      <button class="btn btn-primary" onclick="saveItem()">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Move Modal ────────────────────────────────────────── -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h2>Μετακίνηση Αντικειμένου</h2>
+      <button class="modal-close" onclick="closeModal('moveModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="moveItemName" style="margin-bottom:12px;font-weight:600"></p>
+      <div class="form-group">
+        <label>Νέα Τοποθεσία</label>
+        <input type="text" id="moveNewLocation" placeholder="π.χ. Ράφι 20">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('moveModal')">Ακύρωση</button>
+      <button class="btn btn-green" onclick="confirmMove()">Μετακίνηση</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Categories Modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="categoriesModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Διαχείριση Κατηγοριών</h2>
+      <button class="modal-close" onclick="closeModal('categoriesModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" id="newCatName" placeholder="Νέα κατηγορία..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9em;background:var(--bg-input)">
+        <select id="newCatParent" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85em;background:var(--bg-input);max-width:160px">
+          <option value="">Γονική: (κανένα)</option>
+        </select>
+        <button class="btn btn-primary" onclick="addCategory()">Προσθήκη</button>
+      </div>
+      <ul class="cat-list" id="catList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── Export/Import Modal ───────────────────────────────── -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="max-width:450px">
+    <div class="modal-header">
+      <h2>Εξαγωγή / Εισαγωγή</h2>
+      <button class="modal-close" onclick="closeModal('exportModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align:center">
+      <button class="btn btn-green" onclick="exportData()" style="width:100%;margin-bottom:12px;padding:14px">Εξαγωγή Δεδομένων (JSON)</button>
+      <div class="editor-only" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;display:none">
+        <p style="font-size:0.85em;color:var(--text-light);margin-bottom:8px">Εισαγωγή αντιγράφου ασφαλείας:</p>
+        <input type="file" id="importFile" accept=".json" style="font-size:0.85em" onchange="importData()">
+        <p style="font-size:0.78em;color:#c0392b;margin-top:8px">Προσοχή: Η εισαγωγή αντικαθιστά όλα τα υπάρχοντα δεδομένα.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Modal ─────────────────────────────────────── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 id="confirmTitle">Επιβεβαίωση</h2>
+      <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage"></p>
+    </div>
+    <div class="modal-footer" id="confirmFooter"></div>
+  </div>
+</div>
+
+
+<script>
+// ── i18n ──────────────────────────────────────────────────
+
+var DEFAULT_TRANSLATIONS = {
+  'app.title':              { el: 'ArcheoVault', en: 'ArcheoVault' },
+  'search.placeholder':     { el: 'Αναζήτηση αντικειμένων...', en: 'Search items...' },
+  'btn.addItem':            { el: '+ Αντικείμενο', en: '+ Item' },
+  'btn.categories':         { el: 'Κατηγορίες', en: 'Categories' },
+  'btn.exportImport':       { el: 'Εξαγωγή / Εισαγωγή', en: 'Export / Import' },
+  'filter.allCategories':   { el: 'Όλες οι κατηγορίες', en: 'All categories' },
+  'filter.allLocations':    { el: 'Όλες οι τοποθεσίες', en: 'All locations' },
+  'items.count':            { el: 'αντικείμενα', en: 'items' },
+  'items.countOf':          { el: 'από', en: 'of' },
+  'empty.noItems':          { el: 'Δεν υπάρχουν αντικείμενα', en: 'No items' },
+  'empty.noResults':        { el: 'Κανένα αποτέλεσμα', en: 'No results' },
+  'empty.addHint':          { el: 'Πατήστε "+ Αντικείμενο" για να ξεκινήσετε.', en: 'Press "+ Item" to get started.' },
+  'empty.loginHint':        { el: 'Συνδεθείτε ως editor για να προσθέσετε αντικείμενα.', en: 'Sign in as editor to add items.' },
+  'empty.filterHint':       { el: 'Δοκιμάστε διαφορετικά φίλτρα.', en: 'Try different filters.' },
+  'modal.newItem':          { el: 'Νέο Αντικείμενο', en: 'New Item' },
+  'modal.editItem':         { el: 'Επεξεργασία Αντικειμένου', en: 'Edit Item' },
+  'modal.moveItem':         { el: 'Μετακίνηση Αντικειμένου', en: 'Move Item' },
+  'modal.categories':       { el: 'Διαχείριση Κατηγοριών', en: 'Manage Categories' },
+  'modal.exportImport':     { el: 'Εξαγωγή / Εισαγωγή', en: 'Export / Import' },
+  'modal.confirm':          { el: 'Επιβεβαίωση', en: 'Confirmation' },
+  'label.name':             { el: 'Όνομα *', en: 'Name *' },
+  'label.category':         { el: 'Κατηγορία *', en: 'Category *' },
+  'label.location':         { el: 'Τοποθεσία', en: 'Location' },
+  'label.description':      { el: 'Περιγραφή', en: 'Description' },
+  'label.photos':           { el: 'Φωτογραφίες', en: 'Photos' },
+  'label.newLocation':      { el: 'Νέα Τοποθεσία', en: 'New Location' },
+  'placeholder.name':       { el: 'π.χ. Αμφορέας Τύπου Α', en: 'e.g. Type A Amphora' },
+  'placeholder.location':   { el: 'π.χ. Ράφι 15', en: 'e.g. Shelf 15' },
+  'placeholder.description':{ el: 'Πληροφορίες για το αντικείμενο...', en: 'Information about the item...' },
+  'placeholder.newLocation':{ el: 'π.χ. Ράφι 20', en: 'e.g. Shelf 20' },
+  'placeholder.newCat':     { el: 'Νέα κατηγορία...', en: 'New category...' },
+  'placeholder.driveLink':  { el: 'Google Drive link...', en: 'Google Drive link...' },
+  'btn.stockPicker':        { el: 'Επιλογή εικονιδίου', en: 'Choose icon' },
+  'btn.addLink':            { el: 'Link', en: 'Link' },
+  'btn.or':                 { el: 'ή', en: 'or' },
+  'select.choose':          { el: '-- Επιλέξτε --', en: '-- Select --' },
+  'parent.none':            { el: 'Γονική: (κανένα)', en: 'Parent: (none)' },
+  'btn.add':                { el: 'Προσθήκη', en: 'Add' },
+  'btn.cancel':             { el: 'Ακύρωση', en: 'Cancel' },
+  'btn.save':               { el: 'Αποθήκευση', en: 'Save' },
+  'btn.delete':             { el: 'Διαγραφή', en: 'Delete' },
+  'btn.close':              { el: 'Κλείσιμο', en: 'Close' },
+  'btn.move':               { el: 'Μετακίνηση', en: 'Move' },
+  'btn.export':             { el: 'Εξαγωγή Δεδομένων (JSON)', en: 'Export Data (JSON)' },
+  'btn.import':             { el: 'Εισαγωγή', en: 'Import' },
+  'import.hint':            { el: 'Εισαγωγή αντιγράφου ασφαλείας:', en: 'Import backup:' },
+  'import.warning':         { el: 'Προσοχή: Η εισαγωγή αντικαθιστά όλα τα υπάρχοντα δεδομένα.', en: 'Warning: Import replaces all existing data.' },
+  'config.banner':          { el: 'Το API δεν έχει ρυθμιστεί. Ανοίξτε το αρχείο index.html και συμπληρώστε τα API_URL και GOOGLE_CLIENT_ID. Δείτε το αρχείο SETUP.md για οδηγίες.', en: 'API not configured. Open index.html and set API_URL and GOOGLE_CLIENT_ID. See SETUP.md for instructions.' },
+  'auth.loginEditor':       { el: 'Σύνδεση ως editor: ', en: 'Signed in as editor: ' },
+  'auth.loginReadonly':     { el: 'Σύνδεση (μόνο ανάγνωση): ', en: 'Signed in (read-only): ' },
+  'auth.clickToSignOut':    { el: 'Κλικ για αποσύνδεση', en: 'Click to sign out' },
+  'auth.signedOut':         { el: 'Αποσυνδεθήκατε.', en: 'Signed out.' },
+  'auth.signOutTitle':      { el: 'Αποσύνδεση', en: 'Sign Out' },
+  'auth.signOutConfirm':    { el: 'Θέλετε σίγουρα να αποσυνδεθείτε;', en: 'Are you sure you want to sign out?' },
+  'auth.signOutBtn':        { el: 'Αποσύνδεση', en: 'Sign Out' },
+  'auth.sessionExpired':    { el: 'Η σύνδεσή σας έληξε. Παρακαλώ συνδεθείτε ξανά.', en: 'Your session expired. Please sign in again.' },
+  'auth.editorRequired':    { el: 'Απαιτείται σύνδεση με δικαίωμα επεξεργασίας.', en: 'Editor sign-in required.' },
+  'auth.editorRequiredEdit':{ el: 'Συνδεθείτε ως editor για επεξεργασία.', en: 'Sign in as editor to edit.' },
+  'auth.editorRequiredCat': { el: 'Συνδεθείτε ως editor για διαχείριση κατηγοριών.', en: 'Sign in as editor to manage categories.' },
+  'toast.itemUpdated':      { el: 'Το αντικείμενο ενημερώθηκε.', en: 'Item updated.' },
+  'toast.itemAdded':        { el: 'Το αντικείμενο προστέθηκε.', en: 'Item added.' },
+  'toast.itemDeleted':      { el: 'Το αντικείμενο διαγράφηκε.', en: 'Item deleted.' },
+  'toast.itemMoved':        { el: 'Το αντικείμενο μετακινήθηκε.', en: 'Item moved.' },
+  'toast.catAdded':         { el: 'Η κατηγορία προστέθηκε.', en: 'Category added.' },
+  'toast.subcatAdded':      { el: 'Η υποκατηγορία προστέθηκε.', en: 'Subcategory added.' },
+  'toast.catRenamed':       { el: 'Η κατηγορία μετονομάστηκε.', en: 'Category renamed.' },
+  'toast.catDeleted':       { el: 'Η κατηγορία διαγράφηκε.', en: 'Category deleted.' },
+  'toast.exported':         { el: 'Τα δεδομένα εξήχθησαν.', en: 'Data exported.' },
+  'toast.imported':         { el: 'Τα δεδομένα εισήχθησαν.', en: 'Data imported.' },
+  'toast.errorLoad':        { el: 'Σφάλμα φόρτωσης: ', en: 'Loading error: ' },
+  'toast.error':            { el: 'Σφάλμα: ', en: 'Error: ' },
+  'toast.errorExport':      { el: 'Σφάλμα εξαγωγής: ', en: 'Export error: ' },
+  'toast.errorImport':      { el: 'Σφάλμα εισαγωγής: ', en: 'Import error: ' },
+  'valid.nameRequired':     { el: 'Παρακαλώ συμπληρώστε το όνομα.', en: 'Please enter a name.' },
+  'valid.catRequired':      { el: 'Παρακαλώ επιλέξτε κατηγορία.', en: 'Please select a category.' },
+  'valid.locRequired':      { el: 'Παρακαλώ συμπληρώστε τοποθεσία.', en: 'Please enter a location.' },
+  'confirm.deleteItem':     { el: 'Διαγραφή Αντικειμένου', en: 'Delete Item' },
+  'confirm.deleteItemMsg':  { el: 'Θέλετε σίγουρα να διαγράψετε το "', en: 'Are you sure you want to delete "' },
+  'confirm.deleteCat':      { el: 'Διαγραφή Κατηγορίας', en: 'Delete Category' },
+  'confirm.deleteCatMsg':   { el: ' περιέχει ', en: ' contains ' },
+  'confirm.deleteCatItems': { el: ' αντικείμενα. Τι θέλετε να κάνετε;', en: ' items. What do you want to do?' },
+  'confirm.deleteCatEmpty': { el: 'Θέλετε να διαγράψετε την κατηγορία "', en: 'Do you want to delete category "' },
+  'confirm.deleteAll':      { el: 'Διαγραφή όλων', en: 'Delete all' },
+  'confirm.reassign':       { el: 'Μετακίνηση σε άλλη', en: 'Move to another' },
+  'confirm.importTitle':    { el: 'Εισαγωγή Δεδομένων', en: 'Import Data' },
+  'confirm.importMsg':      { el: 'Αυτή η ενέργεια θα αντικαταστήσει ΟΛΑ τα υπάρχοντα δεδομένα. Συνέχεια;', en: 'This will replace ALL existing data. Continue?' },
+  'cat.noCats':             { el: 'Δεν υπάρχουν κατηγορίες', en: 'No categories' },
+  'cat.addSubcatPrompt':    { el: 'Νέα υποκατηγορία στο "', en: 'New subcategory in "' },
+  'cat.renamePrompt':       { el: 'Νέο όνομα κατηγορίας:', en: 'New category name:' },
+  'cat.reassignPrompt1':    { el: 'Μετακίνηση ', en: 'Move ' },
+  'cat.reassignPrompt2':    { el: ' αντικειμένων σε ποια κατηγορία;', en: ' items to which category?' },
+  'cat.available':          { el: 'Διαθέσιμες:', en: 'Available:' },
+  'ts.created':             { el: 'Δημιουργία: ', en: 'Created: ' },
+  'ts.updated':             { el: 'Ενημέρωση: ', en: 'Updated: ' },
+  'ts.lastUpdated':         { el: 'Τελευταία ενημέρωση: ', en: 'Last updated: ' },
+  'cat.addSubcatTitle':     { el: 'Προσθήκη υποκατηγορίας', en: 'Add subcategory' },
+  'cat.renameTitle':        { el: 'Μετονομασία', en: 'Rename' },
+  'cat.deleteTitle':        { el: 'Διαγραφή', en: 'Delete' }
+};
+
+var currentLang = 'el';
+var loadedTranslations = {};
+
+function t(key) {
+  if (loadedTranslations[currentLang] && loadedTranslations[currentLang][key]) {
+    return loadedTranslations[currentLang][key];
+  }
+  var def = DEFAULT_TRANSLATIONS[key];
+  if (def) return def[currentLang] || def['el'] || key;
+  return key;
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('archeovault_lang', lang);
+  applyLanguage();
+}
+
+function toggleLanguage() {
+  setLanguage(currentLang === 'el' ? 'en' : 'el');
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLang;
+  var langBtn = document.getElementById('langToggle');
+  if (langBtn) langBtn.textContent = currentLang === 'el' ? 'EN' : 'EL';
+
+  document.getElementById('searchInput').placeholder = t('search.placeholder');
+  var addItemBtn = document.querySelector('.header-actions .btn-primary.editor-only');
+  if (addItemBtn) addItemBtn.textContent = t('btn.addItem');
+  var catBtn = document.querySelectorAll('.header-actions .btn-secondary.editor-only');
+  if (catBtn[0]) catBtn[0].textContent = t('btn.categories');
+  if (catBtn[1]) catBtn[1].textContent = t('btn.exportImport');
+
+  updateCategoryDropdowns();
+  updateLocationDropdown();
+  renderItems();
+
+  // Item modal labels
+  var itemModalLabels = document.querySelectorAll('#itemModal .form-group label');
+  if (itemModalLabels.length >= 5) {
+    itemModalLabels[0].textContent = t('label.name');
+    itemModalLabels[1].textContent = t('label.category');
+    itemModalLabels[2].textContent = t('label.location');
+    itemModalLabels[3].textContent = t('label.description');
+    itemModalLabels[4].textContent = t('label.photos');
+  }
+  var itemNameInput = document.getElementById('itemName');
+  if (itemNameInput) itemNameInput.placeholder = t('placeholder.name');
+  var itemLocInput = document.getElementById('itemLocation');
+  if (itemLocInput) itemLocInput.placeholder = t('placeholder.location');
+  var itemDescInput = document.getElementById('itemDescription');
+  if (itemDescInput) itemDescInput.placeholder = t('placeholder.description');
+  var photoUrlInput = document.getElementById('photoUrlInput');
+  if (photoUrlInput) photoUrlInput.placeholder = t('placeholder.driveLink');
+  var stockBtn = document.getElementById('stockPickerBtn');
+  if (stockBtn) stockBtn.textContent = t('btn.stockPicker');
+  var orSpan = document.querySelector('#itemModal .form-group div > span');
+  if (orSpan) orSpan.textContent = t('btn.or');
+  var addLinkBtn = document.querySelector('#itemModal .form-group div > button:last-child');
+  // Find the Link button (not the stock picker)
+  document.querySelectorAll('#itemModal .form-group div > button.btn-outline.btn-sm').forEach(function(btn) {
+    if (btn.id !== 'stockPickerBtn') btn.textContent = t('btn.addLink');
+  });
+  var itemFooterCancel = document.querySelector('#itemModalFooter .btn-outline');
+  if (itemFooterCancel) itemFooterCancel.textContent = t('btn.cancel');
+  var itemFooterSave = document.querySelector('#itemModalFooter .btn-primary');
+  if (itemFooterSave) itemFooterSave.textContent = t('btn.save');
+  var deleteItemBtn = document.getElementById('deleteItemBtn');
+  if (deleteItemBtn) deleteItemBtn.textContent = t('btn.delete');
+
+  // Move modal
+  var moveModalTitle = document.querySelector('#moveModal .modal-header h2');
+  if (moveModalTitle) moveModalTitle.textContent = t('modal.moveItem');
+  var moveLocLabel = document.querySelector('#moveModal .form-group label');
+  if (moveLocLabel) moveLocLabel.textContent = t('label.newLocation');
+  var moveLocInput = document.getElementById('moveNewLocation');
+  if (moveLocInput) moveLocInput.placeholder = t('placeholder.newLocation');
+  var moveCancelBtn = document.querySelector('#moveModal .modal-footer .btn-outline');
+  if (moveCancelBtn) moveCancelBtn.textContent = t('btn.cancel');
+  var moveMoveBtn = document.querySelector('#moveModal .modal-footer .btn-green');
+  if (moveMoveBtn) moveMoveBtn.textContent = t('btn.move');
+
+  // Categories modal
+  var catModalTitle = document.querySelector('#categoriesModal .modal-header h2');
+  if (catModalTitle) catModalTitle.textContent = t('modal.categories');
+  var newCatInput = document.getElementById('newCatName');
+  if (newCatInput) newCatInput.placeholder = t('placeholder.newCat');
+  var addCatBtn = document.querySelector('#categoriesModal .btn-primary');
+  if (addCatBtn) addCatBtn.textContent = t('btn.add');
+
+  // Export modal
+  var exportModalTitle = document.querySelector('#exportModal .modal-header h2');
+  if (exportModalTitle) exportModalTitle.textContent = t('modal.exportImport');
+  var exportBtn = document.querySelector('#exportModal .btn-green');
+  if (exportBtn) exportBtn.textContent = t('btn.export');
+  var importHint = document.querySelector('#exportModal .editor-only p:first-child');
+  if (importHint) importHint.textContent = t('import.hint');
+  var importWarn = document.querySelector('#exportModal .editor-only p:last-child');
+  if (importWarn) importWarn.textContent = t('import.warning');
+}
+
+async function loadTranslations() {
+  try {
+    var data = await apiGet({ action: 'getTranslations' });
+    if (data.translations) {
+      loadedTranslations = data.translations;
+    }
+  } catch (e) {
+    // silently fall back to defaults
+  }
+}
+
+async function seedTranslations() {
+  try {
+    await apiPost({ action: 'seedTranslations', translations: DEFAULT_TRANSLATIONS });
+  } catch (e) {
+    // non-critical
+  }
+}
+
+// ── State ──────────────────────────────────────────────────
+
+let categories = [];
+let items = [];
+let currentPhotos = [];
+let moveItemId = null;
+
+// ── Auth State ─────────────────────────────────────────────
+
+let authUser = null;   // { email, name, picture, idToken }
+let isEditorUser = false;
+
+function saveAuthToStorage() {
+  if (authUser) {
+    localStorage.setItem('archeovault_auth', JSON.stringify(authUser));
+    localStorage.setItem('archeovault_isEditor', isEditorUser ? '1' : '0');
+  }
+}
+
+function clearAuthFromStorage() {
+  localStorage.removeItem('archeovault_auth');
+  localStorage.removeItem('archeovault_isEditor');
+}
+
+function restoreAuthFromStorage() {
+  try {
+    const saved = localStorage.getItem('archeovault_auth');
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!parsed || !parsed.idToken || !parsed.email) return false;
+    authUser = parsed;
+    isEditorUser = localStorage.getItem('archeovault_isEditor') === '1';
+    updateAuthUI();
+    apiGet({ action: 'checkAccess', token: authUser.idToken }).then(function(data) {
+      if (data.isEditor !== undefined) {
+        isEditorUser = data.isEditor;
+        updateAuthUI();
+        saveAuthToStorage();
+      }
+    }).catch(function() {
+      authUser = null;
+      isEditorUser = false;
+      clearAuthFromStorage();
+      updateAuthUI();
+      initGoogleSignIn();
+    });
+    return true;
+  } catch (e) {
+    clearAuthFromStorage();
+    return false;
+  }
+}
+
+function handleCredentialResponse(response) {
+  var idToken = response.credential;
+  var payload = JSON.parse(atob(idToken.split('.')[1]));
+  authUser = {
+    email: payload.email,
+    name: payload.name || payload.email,
+    picture: payload.picture || '',
+    idToken: idToken
+  };
+
+  apiGet({ action: 'checkAccess', token: idToken }).then(function(data) {
+    isEditorUser = data.isEditor || false;
+    updateAuthUI();
+    saveAuthToStorage();
+    dismissSplash();
+    if (isEditorUser) {
+      showToast(t('auth.loginEditor') + authUser.email);
+    } else {
+      showToast(t('auth.loginReadonly') + authUser.email);
+    }
+  }).catch(function() {
+    isEditorUser = false;
+    updateAuthUI();
+    saveAuthToStorage();
+    dismissSplash();
+  });
+}
+
+function signOut() {
+  showConfirm(
+    t('auth.signOutTitle'),
+    t('auth.signOutConfirm'),
+    [
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('auth.signOutBtn'), cls: 'btn-danger', action: function() {
+        closeModal('confirmModal');
+        authUser = null;
+        isEditorUser = false;
+        clearAuthFromStorage();
+        updateAuthUI();
+        if (!useOAuthRedirect && typeof google !== 'undefined' && google.accounts) {
+          google.accounts.id.disableAutoSelect();
+        }
+        initGoogleSignIn();
+        showToast(t('auth.signedOut'));
+      }}
+    ]
+  );
+}
+
+function updateAuthUI() {
+  var signInBtn = document.getElementById('googleSignInBtn');
+  var userChip = document.getElementById('userChip');
+
+  if (authUser) {
+    signInBtn.style.display = 'none';
+    var imgHtml = authUser.picture
+      ? '<img src="' + authUser.picture + '" alt="" referrerpolicy="no-referrer">'
+      : '';
+    var badgeHtml = isEditorUser
+      ? '<span class="editor-badge">Editor</span>'
+      : '<span class="readonly-badge">Read-only</span>';
+    userChip.innerHTML =
+      '<div class="user-chip" onclick="signOut()" title="' + escHtml(t('auth.clickToSignOut')) + '">' +
+        imgHtml +
+        '<span class="user-name">' + escHtml(authUser.name.split(' ')[0]) + '</span>' +
+        badgeHtml +
+      '</div>';
+    userChip.style.display = '';
+  } else {
+    signInBtn.style.display = '';
+    userChip.style.display = 'none';
+    userChip.innerHTML = '';
+  }
+
+  document.querySelectorAll('.editor-only').forEach(function(el) {
+    el.style.display = isEditorUser ? '' : 'none';
+  });
+}
+
+var isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+var isMobile = /Android|iPhone|iPad|iPod|Mobile|mobile/i.test(navigator.userAgent);
+var useOAuthRedirect = isStandalonePWA || isMobile;
+
+function initGoogleSignIn() {
+  if (!GOOGLE_CLIENT_ID) return;
+  if (useOAuthRedirect) {
+    // On mobile, GIS iframe/FedCM flow gets stuck on gsi/transform.
+    // Use a standard OAuth 2.0 implicit-flow redirect instead.
+    var btn = document.getElementById('googleSignInBtn');
+    btn.innerHTML = '<button class="btn btn-secondary" onclick="startPWAOAuthFlow()" style="display:flex;align-items:center;gap:6px;padding:6px 14px">' +
+      '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
+      '<span style="color:var(--text-inv);font-size:0.82em;font-weight:600">Sign in</span>' +
+    '</button>';
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: true
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('googleSignInBtn'),
+    { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin', locale: 'el' }
+  );
+}
+
+function startPWAOAuthFlow() {
+  var redirectUri = window.location.origin + '/';
+  var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth' +
+    '?client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID) +
+    '&redirect_uri=' + encodeURIComponent(redirectUri) +
+    '&response_type=id_token' +
+    '&scope=openid%20email%20profile' +
+    '&nonce=' + Math.random().toString(36).substring(2);
+  window.location.href = authUrl;
+}
+
+function handleOAuthRedirect() {
+  // Check if we returned from an OAuth redirect with id_token in the URL hash
+  var hash = window.location.hash;
+  if (!hash || hash.indexOf('id_token=') === -1) return false;
+  var params = new URLSearchParams(hash.substring(1));
+  var idToken = params.get('id_token');
+  if (!idToken) return false;
+  // Clean the URL hash
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  // Process the token exactly like handleCredentialResponse
+  handleCredentialResponse({ credential: idToken });
+  return true;
+}
+
+// Process OAuth redirect before anything else
+var didOAuthReturn = handleOAuthRedirect();
+
+// ── Category Tree Helpers ─────────────────────────────────
+
+function buildCategoryTree(cats) {
+  var map = {};
+  var roots = [];
+  cats.forEach(function(c) { map[c.id] = Object.assign({}, c, { children: [] }); });
+  cats.forEach(function(c) {
+    var parentId = String(c.parentId || '');
+    if (parentId && map[parentId]) {
+      map[parentId].children.push(map[c.id]);
+    } else {
+      roots.push(map[c.id]);
+    }
+  });
+  return roots;
+}
+
+function flattenTree(nodes, depth) {
+  var result = [];
+  nodes.forEach(function(node) {
+    result.push({ id: node.id, name: node.name, parentId: node.parentId, depth: depth || 0 });
+    if (node.children && node.children.length > 0) {
+      result = result.concat(flattenTree(node.children, (depth || 0) + 1));
+    }
+  });
+  return result;
+}
+
+function getCategoryAndDescendantNames(catName) {
+  var cat = categories.find(function(c) { return c.name === catName; });
+  if (!cat) return [catName];
+  var names = [catName];
+  var queue = [cat.id];
+  while (queue.length > 0) {
+    var current = queue.shift();
+    categories.forEach(function(c) {
+      if (String(c.parentId || '') === String(current)) {
+        names.push(c.name);
+        queue.push(c.id);
+      }
+    });
+  }
+  return names;
+}
+
+function getCategoryItemCount(catId) {
+  var cat = categories.find(function(c) { return c.id === catId; });
+  if (!cat) return 0;
+  return items.filter(function(it) { return it.category === cat.name; }).length;
+}
+
+// ── API Helpers ────────────────────────────────────────────
+
+function showSpinner() { document.getElementById('spinner').classList.add('active'); }
+function hideSpinner() { document.getElementById('spinner').classList.remove('active'); }
+
+function showToast(msg, isError) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' active';
+  setTimeout(function() { t.classList.remove('active'); }, 3000);
+}
+
+async function apiGet(params) {
+  if (!API_URL) throw new Error('API not configured');
+  var url = API_URL + '?' + new URLSearchParams(params).toString();
+  var resp = await fetch(url);
+  var data = await resp.json();
+  if (!data.success) throw new Error(data.error || 'Unknown error');
+  return data;
+}
+
+async function apiPost(body) {
+  if (!API_URL) throw new Error('API not configured');
+  if (!authUser || !isEditorUser) throw new Error(t('auth.editorRequired'));
+  body._idToken = authUser.idToken;
+  var resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (!data.success) {
+    if (data.error === 'AUTH_REQUIRED' || data.error === 'INVALID_TOKEN') {
+      authUser = null;
+      isEditorUser = false;
+      clearAuthFromStorage();
+      updateAuthUI();
+      initGoogleSignIn();
+      throw new Error(t('auth.sessionExpired'));
+    }
+    if (data.error === 'NOT_EDITOR') {
+      throw new Error(data.message || t('auth.editorRequired'));
+    }
+    throw new Error(data.error || 'Unknown error');
+  }
+  return data;
+}
+
+// ── Convert Google Drive share link to direct image URL ────
+
+function driveToDirectUrl(url) {
+  if (!url) return '';
+  var match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
+  match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w800';
+  return url;
+}
+
+// ── Data Loading ───────────────────────────────────────────
+
+async function loadAll() {
+  showSpinner();
+  try {
+    var results = await Promise.all([
+      apiGet({ action: 'getCategories' }),
+      apiGet({ action: 'getItems' })
+    ]);
+    categories = results[0].categories || [];
+    items = results[1].items || [];
+    updateCategoryDropdowns();
+    updateLocationDropdown();
+    renderItems();
+  } catch (err) {
+    showToast(t('toast.errorLoad') + err.message, true);
+  } finally {
+    hideSpinner();
+  }
+}
+
+// ── Rendering ──────────────────────────────────────────────
+
+function renderItems() {
+  var container = document.getElementById('cardsContainer');
+  var search = document.getElementById('searchInput').value.toLowerCase();
+  var filterCat = document.getElementById('filterCategory').value;
+  var filterLoc = document.getElementById('filterLocation').value;
+
+  var allowedCatNames = filterCat ? getCategoryAndDescendantNames(filterCat) : null;
+
+  var filtered = items.filter(function(it) {
+    if (allowedCatNames && allowedCatNames.indexOf(it.category) === -1) return false;
+    if (filterLoc && it.location !== filterLoc) return false;
+    if (search) {
+      var haystack = [it.name, it.category, it.location, it.description].join(' ').toLowerCase();
+      if (haystack.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('itemCount').textContent =
+    filtered.length === items.length
+      ? items.length + ' ' + t('items.count')
+      : filtered.length + ' ' + t('items.countOf') + ' ' + items.length + ' ' + t('items.count');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">' +
+      '<div class="icon">🏺</div>' +
+      '<h2>' + (items.length === 0 ? t('empty.noItems') : t('empty.noResults')) + '</h2>' +
+      '<p>' + (items.length === 0
+        ? (isEditorUser ? t('empty.addHint') : t('empty.loginHint'))
+        : t('empty.filterHint')) + '</p>' +
+      '</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(function(it) {
+    var photos = (it.photos || '').split(',').filter(Boolean);
+    var thumbHtml = '';
+    if (photos.length > 0) {
+      if (isStockPhoto(photos[0])) {
+        var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(photos[0]); });
+        thumbHtml = stock ? stock.svg : '<span class="placeholder">🏺</span>';
+      } else {
+        var thumbUrl = driveToDirectUrl(photos[0]);
+        thumbHtml = '<img src="' + thumbUrl + '" alt="" onerror="this.parentElement.innerHTML=\'<span class=placeholder>🏺</span>\'">';
+      }
+    } else {
+      thumbHtml = '<span class="placeholder">🏺</span>';
+    }
+    return '<div class="card" onclick="' + (isEditorUser ? 'openItemModal(\'' + it.id + '\')' : 'viewItemDetail(\'' + it.id + '\')') + '">' +
+      '<div class="card-thumb">' + thumbHtml + '</div>' +
+      '<div class="card-body">' +
+        '<h3>' + escHtml(it.name) + '</h3>' +
+        '<div class="card-badges">' +
+          (it.category ? '<span class="badge badge-cat">' + escHtml(it.category) + '</span>' : '') +
+          (it.location ? '<span class="badge badge-loc">' + escHtml(it.location) + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function updateCategoryDropdowns() {
+  var filterSel = document.getElementById('filterCategory');
+  var itemSel = document.getElementById('itemCategory');
+  var parentSel = document.getElementById('newCatParent');
+  var currentFilter = filterSel.value;
+
+  var tree = buildCategoryTree(categories);
+  var flat = flattenTree(tree, 0);
+
+  filterSel.innerHTML = '<option value="">' + t('filter.allCategories') + '</option>' +
+    flat.map(function(c) {
+      var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+      return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
+    }).join('');
+  filterSel.value = currentFilter;
+
+  itemSel.innerHTML = '<option value="">' + t('select.choose') + '</option>' +
+    flat.map(function(c) {
+      var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+      return '<option value="' + escHtml(c.name) + '">' + indent + escHtml(c.name) + '</option>';
+    }).join('');
+
+  if (parentSel) {
+    parentSel.innerHTML = '<option value="">' + t('parent.none') + '</option>' +
+      flat.map(function(c) {
+        var indent = c.depth > 0 ? '  '.repeat(c.depth) + '└ ' : '';
+        return '<option value="' + escHtml(c.id) + '">' + indent + escHtml(c.name) + '</option>';
+      }).join('');
+  }
+}
+
+function updateLocationDropdown() {
+  var sel = document.getElementById('filterLocation');
+  var current = sel.value;
+  var locSet = {};
+  items.forEach(function(i) { if (i.location) locSet[i.location] = true; });
+  var locations = Object.keys(locSet).sort();
+  sel.innerHTML = '<option value="">' + t('filter.allLocations') + '</option>' +
+    locations.map(function(l) { return '<option value="' + escHtml(l) + '">' + escHtml(l) + '</option>'; }).join('');
+  sel.value = current;
+}
+
+// ── View-only Item Detail ──────────────────────────────────
+
+function viewItemDetail(id) {
+  var item = items.find(function(i) { return i.id === id; });
+  if (!item) return;
+  var photos = (item.photos || '').split(',').filter(Boolean);
+  var photosHtml = photos.length > 0
+    ? '<div class="photo-gallery" style="margin-top:12px">' +
+        photos.map(function(url) {
+          if (isStockPhoto(url)) {
+            var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(url); });
+            return stock ? '<div class="photo-item">' + stock.svg + '</div>' : '';
+          }
+          return '<div class="photo-item"><img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'"></div>';
+        }).join('') +
+      '</div>'
+    : '';
+  document.getElementById('confirmTitle').textContent = item.name;
+  document.getElementById('confirmMessage').innerHTML =
+    (item.category ? '<span class="badge badge-cat">' + escHtml(item.category) + '</span> ' : '') +
+    (item.location ? '<span class="badge badge-loc">' + escHtml(item.location) + '</span>' : '') +
+    (item.description ? '<p style="margin-top:12px">' + escHtml(item.description) + '</p>' : '') +
+    photosHtml +
+    '<div class="timestamps" style="display:block">' + t('ts.created') + formatDate(item.createdAt) + '<br>' + t('ts.updated') + formatDate(item.updatedAt) + '</div>';
+  document.getElementById('confirmFooter').innerHTML =
+    '<button class="btn btn-outline" onclick="closeModal(\'confirmModal\')">' + t('btn.close') + '</button>';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+// ── Item Modal ─────────────────────────────────────────────
+
+function openItemModal(id) {
+  if (!isEditorUser) { showToast(t('auth.editorRequiredEdit'), true); return; }
+
+  var modal = document.getElementById('itemModal');
+  var title = document.getElementById('itemModalTitle');
+  var delBtn = document.getElementById('deleteItemBtn');
+  var ts = document.getElementById('itemTimestamps');
+
+  document.getElementById('itemId').value = '';
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemCategory').value = '';
+  document.getElementById('itemLocation').value = '';
+  document.getElementById('itemDescription').value = '';
+  currentPhotos = [];
+  renderPhotoGallery();
+  updateCategoryDropdowns();
+
+  if (id) {
+    var item = items.find(function(i) { return i.id === id; });
+    if (!item) return;
+    title.textContent = t('modal.editItem');
+    document.getElementById('itemId').value = item.id;
+    document.getElementById('itemName').value = item.name || '';
+    document.getElementById('itemCategory').value = item.category || '';
+    document.getElementById('itemLocation').value = item.location || '';
+    document.getElementById('itemDescription').value = item.description || '';
+    currentPhotos = (item.photos || '').split(',').filter(Boolean);
+    renderPhotoGallery();
+    delBtn.style.display = '';
+    ts.style.display = '';
+    ts.innerHTML = t('ts.created') + formatDate(item.createdAt) + '<br>' + t('ts.lastUpdated') + formatDate(item.updatedAt);
+  } else {
+    title.textContent = t('modal.newItem');
+    delBtn.style.display = 'none';
+    ts.style.display = 'none';
+  }
+
+  modal.classList.add('active');
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  try {
+    var dt = new Date(d);
+    var locale = currentLang === 'en' ? 'en-GB' : 'el-GR';
+    return dt.toLocaleDateString(locale) + ' ' + dt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return d; }
+}
+
+async function saveItem() {
+  var id = document.getElementById('itemId').value;
+  var name = document.getElementById('itemName').value.trim();
+  var category = document.getElementById('itemCategory').value;
+  var location = document.getElementById('itemLocation').value.trim();
+  var description = document.getElementById('itemDescription').value.trim();
+  var photos = currentPhotos.join(',');
+
+  if (!name) { showToast(t('valid.nameRequired'), true); return; }
+  if (!category) { showToast(t('valid.catRequired'), true); return; }
+
+  showSpinner();
+  try {
+    if (id) {
+      await apiPost({ action: 'updateItem', id: id, name: name, category: category, location: location, description: description, photos: photos });
+      showToast(t('toast.itemUpdated'));
+    } else {
+      await apiPost({ action: 'addItem', name: name, category: category, location: location, description: description, photos: photos });
+      showToast(t('toast.itemAdded'));
+    }
+    closeModal('itemModal');
+    await loadAll();
+  } catch (err) {
+    showToast(t('toast.error') + err.message, true);
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteCurrentItem() {
+  var id = document.getElementById('itemId').value;
+  if (!id) return;
+  var item = items.find(function(i) { return i.id === id; });
+  showConfirm(
+    t('confirm.deleteItem'),
+    t('confirm.deleteItemMsg') + (item ? item.name : '') + '";',
+    [
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('btn.delete'), cls: 'btn-danger', action: async function() {
+        closeModal('confirmModal');
+        showSpinner();
+        try {
+          await apiPost({ action: 'deleteItem', id: id });
+          showToast(t('toast.itemDeleted'));
+          closeModal('itemModal');
+          await loadAll();
+        } catch (err) {
+          showToast(t('toast.error') + err.message, true);
+        } finally { hideSpinner(); }
+      }}
+    ]
+  );
+}
+
+// ── Stock Archaeological Illustrations ──────────────────────
+
+var STOCK_IMAGES = [
+  { id: 'amphora', label: 'Αμφορέας', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M48 28h24v6h-24z" fill="#a0522d"/><path d="M45 34c-3 0-5 4-6 10l-4 36c-1 10 3 18 10 22h30c7-4 11-12 10-22l-4-36c-1-6-3-10-6-10z" fill="#c0392b" stroke="#8b2500" stroke-width="1.5"/><path d="M45 34c-3 0-5 4-6 10h42c-1-6-3-10-6-10z" fill="#cd5c5c"/><path d="M42 52h36M42 62h36M42 72h36" stroke="#8b2500" stroke-width="0.8" opacity="0.4"/><path d="M38 42c-6-4-10-2-10 4s4 10 8 12" fill="none" stroke="#8b2500" stroke-width="3" stroke-linecap="round"/><path d="M82 42c6-4 10-2 10 4s-4 10-8 12" fill="none" stroke="#8b2500" stroke-width="3" stroke-linecap="round"/><path d="M50 48l4-6 4 6 4-6 4 6 4-6 4 6" fill="none" stroke="#daa520" stroke-width="1.2"/><ellipse cx="60" cy="90" rx="14" ry="3" fill="#8b2500" opacity="0.15"/></svg>' },
+  { id: 'vase', label: 'Αγγείο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M48 88h24v4H48z" fill="#8b4513"/><path d="M44 88c0 0 2-20 6-32s4-18 2-22h16c-2 4-2 10 2 22s6 32 6 32z" fill="#d2691e" stroke="#8b4513" stroke-width="1.5"/><path d="M52 34h16v4c0 2-4 3-8 3s-8-1-8-3z" fill="#8b4513"/><path d="M50 50c8-2 12-2 20 0" fill="none" stroke="#2c1810" stroke-width="0.8"/><path d="M48 58c8-2 16-2 24 0" fill="none" stroke="#2c1810" stroke-width="0.8"/><circle cx="54" cy="68" r="3" fill="#2c1810" opacity="0.3"/><circle cx="66" cy="68" r="3" fill="#2c1810" opacity="0.3"/><circle cx="60" cy="75" r="3" fill="#2c1810" opacity="0.3"/></svg>' },
+  { id: 'pottery', label: 'Κεραμικό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="85" rx="22" ry="5" fill="#8b4513" opacity="0.15"/><path d="M40 82c0 6 9 10 20 10s20-4 20-10l2-30c0-8-8-16-22-16s-22 8-22 16z" fill="#deb887" stroke="#a0522d" stroke-width="1.5"/><path d="M40 52c0-8 9-16 20-16s20 8 20 16" fill="#e8cfa0" stroke="#a0522d" stroke-width="1.5"/><path d="M44 60h32M44 68h32M44 76h32" stroke="#a0522d" stroke-width="0.6" opacity="0.3" stroke-dasharray="3 3"/><path d="M48 58l3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4" fill="none" stroke="#a0522d" stroke-width="1"/></svg>' },
+  { id: 'statue', label: 'Άγαλμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="42" y="90" width="36" height="6" rx="1" fill="#a0937d"/><rect x="48" y="84" width="24" height="8" rx="1" fill="#b8a99a"/><circle cx="60" cy="38" r="10" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M55 36c0 0 2 2 5 2s5-2 5-2" fill="none" stroke="#8b7d6b" stroke-width="0.8"/><circle cx="56" cy="35" r="1" fill="#8b7d6b"/><circle cx="64" cy="35" r="1" fill="#8b7d6b"/><path d="M56 48l-1 20h-4l-1 16h4l2-16h8l2 16h4l-1-16h-4l-1-20z" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M56 52l-10 10 2 2 10-8" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/><path d="M64 52l10 10-2 2-10-8" fill="#d4c5b0" stroke="#a0937d" stroke-width="1"/></svg>' },
+  { id: 'coin', label: 'Νόμισμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="62" cy="62" rx="28" ry="28" fill="#b8860b" opacity="0.3"/><circle cx="60" cy="60" r="28" fill="#daa520" stroke="#b8860b" stroke-width="2"/><circle cx="60" cy="60" r="24" fill="none" stroke="#b8860b" stroke-width="0.8"/><circle cx="60" cy="60" r="20" fill="none" stroke="#b8860b" stroke-width="0.5" stroke-dasharray="2 2"/><path d="M55 50h10v4h-3v12h3v4h-10v-4h3v-12h-3z" fill="#b8860b" opacity="0.6"/><path d="M48 52c0-4 6-8 12-8s12 4 12 8" fill="none" stroke="#b8860b" stroke-width="0.8"/></svg>' },
+  { id: 'column', label: 'Κίονας', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="40" y="18" width="40" height="6" rx="1" fill="#a0937d"/><rect x="44" y="24" width="32" height="6" fill="#b8a99a"/><rect x="46" y="30" width="28" height="56" fill="#d4c5b0" stroke="#a0937d" stroke-width="0.8"/><line x1="52" y1="30" x2="52" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><line x1="60" y1="30" x2="60" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><line x1="68" y1="30" x2="68" y2="86" stroke="#a0937d" stroke-width="0.5" opacity="0.4"/><rect x="44" y="86" width="32" height="6" fill="#b8a99a"/><rect x="40" y="92" width="40" height="6" rx="1" fill="#a0937d"/><path d="M44 24c2-3 4-5 8-5s4 5 8 5 4-5 8-5 6 2 8 5" fill="none" stroke="#a0937d" stroke-width="0.8"/></svg>' },
+  { id: 'mosaic', label: 'Ψηφιδωτό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="25" y="25" width="70" height="70" rx="2" fill="#e8d5c4" stroke="#a0937d" stroke-width="1"/><rect x="30" y="30" width="12" height="12" fill="#c0392b" rx="1"/><rect x="44" y="30" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="58" y="30" width="12" height="12" fill="#daa520" rx="1"/><rect x="72" y="30" width="12" height="12" fill="#c0392b" rx="1"/><rect x="30" y="44" width="12" height="12" fill="#daa520" rx="1"/><rect x="44" y="44" width="12" height="12" fill="#27ae60" rx="1"/><rect x="58" y="44" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="72" y="44" width="12" height="12" fill="#daa520" rx="1"/><rect x="30" y="58" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="44" y="58" width="12" height="12" fill="#c0392b" rx="1"/><rect x="58" y="58" width="12" height="12" fill="#27ae60" rx="1"/><rect x="72" y="58" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="30" y="72" width="12" height="12" fill="#c0392b" rx="1"/><rect x="44" y="72" width="12" height="12" fill="#2c3e50" rx="1"/><rect x="58" y="72" width="12" height="12" fill="#daa520" rx="1"/><rect x="72" y="72" width="12" height="12" fill="#c0392b" rx="1"/></svg>' },
+  { id: 'helmet', label: 'Κράνος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M36 72c0-20 10-40 24-42s24 22 24 42c0 4-2 8-6 10H42c-4-2-6-6-6-10z" fill="#b8860b" stroke="#8b6914" stroke-width="1.5"/><path d="M40 72c0-18 8-34 20-36s20 18 20 36" fill="#daa520" stroke="#8b6914" stroke-width="1"/><path d="M58 30c0-6 1-10 2-12s2 6 2 12" fill="#cd853f" stroke="#8b6914" stroke-width="1"/><path d="M56 18c2-4 4-4 8 0" fill="none" stroke="#8b6914" stroke-width="1.5" stroke-linecap="round"/><path d="M42 68h36" stroke="#8b6914" stroke-width="1.5"/><path d="M40 74l-4 8h8zM80 74l4 8h-8z" fill="#b8860b" stroke="#8b6914" stroke-width="0.8"/><rect x="44" y="72" width="8" height="12" rx="3" fill="#2c1810" opacity="0.5"/><rect x="68" y="72" width="8" height="12" rx="3" fill="#2c1810" opacity="0.5"/></svg>' },
+  { id: 'sword', label: 'Ξίφος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M58 16l2-2 2 2v58h-4z" fill="#a8a8a8" stroke="#707070" stroke-width="0.8"/><path d="M59 16l1-2 1 2v58h-2z" fill="#c0c0c0"/><rect x="46" y="74" width="28" height="5" rx="2" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/><rect x="56" y="79" width="8" height="16" rx="2" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/><circle cx="60" cy="87" r="2" fill="#daa520"/><path d="M54 95h12l-2 6h-8z" fill="#8b4513" stroke="#5c3310" stroke-width="0.8"/></svg>' },
+  { id: 'scroll', label: 'Πάπυρος', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M30 30c4-4 6-2 6 4v52c0 6-2 8-6 4" fill="#d2b48c" stroke="#a0522d" stroke-width="1"/><path d="M90 30c-4-4-6-2-6 4v52c0 6 2 8 6 4" fill="#d2b48c" stroke="#a0522d" stroke-width="1"/><rect x="36" y="30" width="48" height="60" fill="#f5deb3" stroke="#a0522d" stroke-width="0.8"/><line x1="42" y1="40" x2="78" y2="40" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="48" x2="78" y2="48" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="56" x2="78" y2="56" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="64" x2="70" y2="64" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="72" x2="74" y2="72" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><line x1="42" y1="80" x2="60" y2="80" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/></svg>' },
+  { id: 'jewelry', label: 'Κόσμημα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="52" rx="30" ry="28" fill="none" stroke="#daa520" stroke-width="3"/><ellipse cx="60" cy="52" rx="26" ry="24" fill="none" stroke="#b8860b" stroke-width="1"/><circle cx="60" cy="80" r="8" fill="#c0392b" stroke="#8b2500" stroke-width="1"/><circle cx="60" cy="80" r="5" fill="#e74c3c"/><circle cx="60" cy="24" r="4" fill="#daa520" stroke="#b8860b" stroke-width="0.8"/><circle cx="38" cy="36" r="3" fill="#daa520"/><circle cx="82" cy="36" r="3" fill="#daa520"/><circle cx="32" cy="56" r="3" fill="#daa520"/><circle cx="88" cy="56" r="3" fill="#daa520"/><path d="M52 80l8-10 8 10" fill="none" stroke="#daa520" stroke-width="1.5"/></svg>' },
+  { id: 'lamp', label: 'Λυχνάρι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="76" rx="24" ry="8" fill="#a0522d" opacity="0.15"/><path d="M38 68c-2-4-2-10 2-14s12-8 20-8 16 4 20 8 4 10 2 14z" fill="#d2691e" stroke="#8b4513" stroke-width="1.5"/><path d="M38 68c4 4 12 6 22 6s18-2 22-6" fill="#c0792b" stroke="#8b4513" stroke-width="1"/><path d="M32 66h-6c-2 0-3-2-2-4l4-4h6" fill="#d2691e" stroke="#8b4513" stroke-width="1"/><path d="M88 66h6c2 0 3-1 3-3l-2-4h-6" fill="#d2691e" stroke="#8b4513" stroke-width="1"/><path d="M58 46c0-6 1-10 2-14" fill="none" stroke="#e8a020" stroke-width="2" stroke-linecap="round"/><path d="M56 30c2-4 4-6 4-6s2 2 4 6c2 3 0 6-4 6s-6-3-4-6z" fill="#f4a020" opacity="0.7"/></svg>' },
+  { id: 'bone', label: 'Οστό', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M32 40c-4-6-2-14 4-16s12 2 14 8l20 36c2 6 8 10 14 8s8-10 4-16" fill="none" stroke="#a0937d" stroke-width="4" stroke-linecap="round"/><circle cx="34" cy="36" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="42" cy="30" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="82" cy="82" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><circle cx="88" cy="74" r="6" fill="#e8d5c4" stroke="#a0937d" stroke-width="1.5"/><path d="M38 34l30 48" stroke="#d4c5b0" stroke-width="6" stroke-linecap="round"/></svg>' },
+  { id: 'tool', label: 'Εργαλείο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M40 28l20 50" stroke="#8b4513" stroke-width="5" stroke-linecap="round"/><path d="M34 24c2-4 8-6 12-2l-6 14c-6 0-8-8-6-12z" fill="#a8a8a8" stroke="#707070" stroke-width="1"/><path d="M70 34l16 48" stroke="#8b4513" stroke-width="4" stroke-linecap="round"/><path d="M66 30l8-6 4 4-6 8z" fill="#a8a8a8" stroke="#707070" stroke-width="1"/><path d="M56 90h8v6h-8z" fill="#8b4513"/><path d="M48 88h24l-2 6H50z" fill="#a0522d" stroke="#6b3410" stroke-width="0.8"/></svg>' },
+  { id: 'tile', label: 'Πλακίδιο', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><rect x="28" y="34" width="64" height="52" rx="3" fill="#d2b48c" stroke="#a0522d" stroke-width="1.5"/><rect x="32" y="38" width="56" height="44" rx="1" fill="#e8d5c4"/><path d="M44 48l16 12-16 12z" fill="#c0392b" opacity="0.5"/><path d="M76 48l-16 12 16 12z" fill="#2c3e50" opacity="0.5"/><path d="M60 44v32" stroke="#a0522d" stroke-width="0.6" opacity="0.3"/><path d="M40 60h40" stroke="#a0522d" stroke-width="0.6" opacity="0.3"/></svg>' },
+  { id: 'jar', label: 'Πιθάρι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="90" rx="20" ry="4" fill="#8b4513" opacity="0.15"/><path d="M44 88c-6-6-10-18-10-30s4-22 10-26h32c6 4 10 14 10 26s-4 24-10 30z" fill="#b8860b" stroke="#8b6914" stroke-width="1.5"/><ellipse cx="60" cy="32" rx="16" ry="5" fill="#daa520" stroke="#8b6914" stroke-width="1"/><path d="M42 50h36" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/><path d="M38 64h44" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/><path d="M40 78h40" stroke="#8b6914" stroke-width="0.8" opacity="0.4"/></svg>' },
+  { id: 'mask', label: 'Μάσκα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M36 40c0-12 10-22 24-22s24 10 24 22v20c0 16-10 28-24 28s-24-12-24-28z" fill="#daa520" stroke="#b8860b" stroke-width="1.5"/><ellipse cx="48" cy="48" rx="8" ry="6" fill="#2c1810" opacity="0.6"/><ellipse cx="72" cy="48" rx="8" ry="6" fill="#2c1810" opacity="0.6"/><ellipse cx="48" cy="48" rx="6" ry="4" fill="#f5ebe0" opacity="0.3"/><ellipse cx="72" cy="48" rx="6" ry="4" fill="#f5ebe0" opacity="0.3"/><path d="M52 66c4 4 12 4 16 0" fill="none" stroke="#8b6914" stroke-width="1.5" stroke-linecap="round"/><path d="M56 56l4 4 4-4" fill="none" stroke="#8b6914" stroke-width="1.2"/></svg>' },
+  { id: 'shield', label: 'Ασπίδα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M60 18c-20 4-32 10-32 20 0 24 14 48 32 62 18-14 32-38 32-62 0-10-12-16-32-20z" fill="#8b4513" stroke="#5c3310" stroke-width="1.5"/><path d="M60 24c-16 4-26 8-26 16 0 20 12 40 26 52 14-12 26-32 26-52 0-8-10-12-26-16z" fill="#a0522d"/><circle cx="60" cy="54" r="14" fill="none" stroke="#daa520" stroke-width="2"/><circle cx="60" cy="54" r="8" fill="#daa520" opacity="0.4"/><path d="M60 28v56" stroke="#daa520" stroke-width="1" opacity="0.4"/><path d="M38 54h44" stroke="#daa520" stroke-width="1" opacity="0.4"/></svg>' },
+  { id: 'fragment', label: 'Θραύσμα', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><path d="M35 40l15-8 12 6 18-4 8 12-4 18 6 14-10 8-16-2-12 6-14-10 2-16-8-12z" fill="#d2b48c" stroke="#a0522d" stroke-width="1.5" stroke-linejoin="round"/><path d="M50 42l8 20-12 14" fill="none" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><path d="M65 38l-4 22 14 10" fill="none" stroke="#a0522d" stroke-width="0.6" opacity="0.4"/><circle cx="55" cy="55" r="2" fill="#a0522d" opacity="0.3"/><circle cx="65" cy="62" r="1.5" fill="#a0522d" opacity="0.3"/></svg>' },
+  { id: 'ring', label: 'Δαχτυλίδι', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f5ebe0"/><ellipse cx="60" cy="64" rx="26" ry="22" fill="none" stroke="#daa520" stroke-width="6"/><ellipse cx="60" cy="64" rx="26" ry="22" fill="none" stroke="#b8860b" stroke-width="2"/><ellipse cx="60" cy="42" rx="10" ry="8" fill="#daa520" stroke="#b8860b" stroke-width="1.5"/><circle cx="60" cy="40" r="5" fill="#27ae60" stroke="#1a7a3a" stroke-width="0.8"/><circle cx="60" cy="39" r="2" fill="#2ecc71" opacity="0.6"/></svg>' }
+];
+
+function getStockSvgDataUri(stockId) {
+  var stock = STOCK_IMAGES.find(function(s) { return s.id === stockId; });
+  if (!stock) return '';
+  return 'data:image/svg+xml,' + encodeURIComponent(stock.svg);
+}
+
+function toggleStockPicker() {
+  var picker = document.getElementById('stockPicker');
+  if (picker.style.display === 'none') {
+    picker.style.display = '';
+    renderStockPicker();
+  } else {
+    picker.style.display = 'none';
+  }
+}
+
+function renderStockPicker() {
+  var picker = document.getElementById('stockPicker');
+  picker.innerHTML = STOCK_IMAGES.map(function(s) {
+    return '<div class="stock-thumb" onclick="selectStockImage(\'' + s.id + '\')" title="' + escHtml(s.label) + '">' + s.svg + '</div>';
+  }).join('');
+}
+
+function selectStockImage(stockId) {
+  var uri = 'stock:' + stockId;
+  currentPhotos.push(uri);
+  renderPhotoGallery();
+  document.getElementById('stockPicker').style.display = 'none';
+}
+
+function isStockPhoto(url) {
+  return url && url.indexOf('stock:') === 0;
+}
+
+function getStockId(url) {
+  return url.replace('stock:', '');
+}
+
+// ── Photo Gallery ──────────────────────────────────────────
+
+function addPhotoLink() {
+  var input = document.getElementById('photoUrlInput');
+  var url = input.value.trim();
+  if (!url) return;
+  currentPhotos.push(url);
+  input.value = '';
+  renderPhotoGallery();
+}
+
+function removePhoto(idx) {
+  currentPhotos.splice(idx, 1);
+  renderPhotoGallery();
+}
+
+function renderPhotoGallery() {
+  var gallery = document.getElementById('photoGallery');
+  if (currentPhotos.length === 0) {
+    gallery.innerHTML = '';
+    return;
+  }
+  gallery.innerHTML = currentPhotos.map(function(url, i) {
+    if (isStockPhoto(url)) {
+      var stock = STOCK_IMAGES.find(function(s) { return s.id === getStockId(url); });
+      if (!stock) return '';
+      return '<div class="photo-item">' +
+        stock.svg +
+        '<button class="remove-photo" onclick="event.stopPropagation();removePhoto(' + i + ')">✕</button>' +
+      '</div>';
+    }
+    return '<div class="photo-item">' +
+      '<img src="' + driveToDirectUrl(url) + '" alt="" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect fill=%22%23ddd%22 width=%2280%22 height=%2280%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>!</text></svg>\'">' +
+      '<button class="remove-photo" onclick="event.stopPropagation();removePhoto(' + i + ')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Move Item ──────────────────────────────────────────────
+
+function openMoveModal(id) {
+  var item = items.find(function(i) { return i.id === id; });
+  if (!item) return;
+  moveItemId = id;
+  document.getElementById('moveItemName').textContent = item.name;
+  document.getElementById('moveNewLocation').value = item.location || '';
+  closeModal('itemModal');
+  document.getElementById('moveModal').classList.add('active');
+}
+
+async function confirmMove() {
+  var newLoc = document.getElementById('moveNewLocation').value.trim();
+  if (!newLoc) { showToast(t('valid.locRequired'), true); return; }
+  showSpinner();
+  try {
+    await apiPost({ action: 'moveItem', id: moveItemId, location: newLoc });
+    showToast(t('toast.itemMoved'));
+    closeModal('moveModal');
+    await loadAll();
+  } catch (err) {
+    showToast(t('toast.error') + err.message, true);
+  } finally { hideSpinner(); }
+}
+
+// ── Categories Modal ───────────────────────────────────────
+
+function openCategoriesModal() {
+  if (!isEditorUser) { showToast(t('auth.editorRequiredCat'), true); return; }
+  updateCategoryDropdowns();
+  renderCatList();
+  document.getElementById('categoriesModal').classList.add('active');
+}
+
+function renderCatList() {
+  var list = document.getElementById('catList');
+  if (categories.length === 0) {
+    list.innerHTML = '<li style="color:var(--text-light);font-style:italic;padding:16px;text-align:center">' + t('cat.noCats') + '</li>';
+    return;
+  }
+  var tree = buildCategoryTree(categories);
+  var flat = flattenTree(tree, 0);
+
+  list.innerHTML = flat.map(function(c) {
+    var count = getCategoryItemCount(c.id);
+    var indent = c.depth > 0 ? 'padding-left:' + (12 + c.depth * 24) + 'px;' : '';
+    var prefix = c.depth > 0 ? '<span style="color:var(--text-light);margin-right:4px">└</span>' : '';
+    var escapedName = escHtml(c.name).replace(/'/g, "\\'");
+    return '<li style="' + indent + '">' +
+      '<div class="cat-info">' + prefix + '<span>' + escHtml(c.name) + '</span><span class="cat-count">' + count + '</span></div>' +
+      '<div class="cat-actions">' +
+        '<button title="' + t('cat.addSubcatTitle') + '" onclick="addSubcategory(\'' + c.id + '\',\'' + escapedName + '\')">➕</button>' +
+        '<button title="' + t('cat.renameTitle') + '" onclick="renameCategory(\'' + c.id + '\',\'' + escapedName + '\')">✏️</button>' +
+        '<button title="' + t('cat.deleteTitle') + '" onclick="deleteCategoryPrompt(\'' + c.id + '\',\'' + escapedName + '\',' + count + ')">🗑️</button>' +
+      '</div>' +
+    '</li>';
+  }).join('');
+}
+
+async function addCategory() {
+  var input = document.getElementById('newCatName');
+  var parentSel = document.getElementById('newCatParent');
+  var name = input.value.trim();
+  if (!name) return;
+  var parentId = parentSel ? parentSel.value : '';
+  showSpinner();
+  try {
+    await apiPost({ action: 'addCategory', name: name, parentId: parentId });
+    input.value = '';
+    if (parentSel) parentSel.value = '';
+    showToast(t('toast.catAdded'));
+    await loadAll();
+    renderCatList();
+  } catch (err) {
+    showToast(t('toast.error') + err.message, true);
+  } finally { hideSpinner(); }
+}
+
+function addSubcategory(parentId, parentName) {
+  var name = prompt(t('cat.addSubcatPrompt') + parentName + '":');
+  if (!name || !name.trim()) return;
+  showSpinner();
+  apiPost({ action: 'addCategory', name: name.trim(), parentId: parentId })
+    .then(function() { showToast(t('toast.subcatAdded')); return loadAll(); })
+    .then(function() { renderCatList(); updateCategoryDropdowns(); })
+    .catch(function(err) { showToast(t('toast.error') + err.message, true); })
+    .finally(function() { hideSpinner(); });
+}
+
+function renameCategory(id, oldName) {
+  var newName = prompt(t('cat.renamePrompt'), oldName);
+  if (!newName || newName.trim() === oldName) return;
+  showSpinner();
+  apiPost({ action: 'renameCategory', id: id, name: newName.trim() })
+    .then(function() { showToast(t('toast.catRenamed')); return loadAll(); })
+    .then(function() { renderCatList(); })
+    .catch(function(err) { showToast(t('toast.error') + err.message, true); })
+    .finally(function() { hideSpinner(); });
+}
+
+function deleteCategoryPrompt(id, name, count) {
+  if (count > 0) {
+    var otherCats = categories.filter(function(c) { return c.id !== id; });
+    var buttons = [
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+      { label: t('confirm.deleteAll'), cls: 'btn-danger', action: function() { forceDeleteCategory(id, true, null); } }
+    ];
+    if (otherCats.length > 0) {
+      buttons.splice(1, 0, {
+        label: t('confirm.reassign'), cls: 'btn-green', action: function() {
+          var target = prompt(t('cat.reassignPrompt1') + count + t('cat.reassignPrompt2') + '\n\n' + t('cat.available') + '\n' +
+            otherCats.map(function(c) { return '  - ' + c.name; }).join('\n'));
+          if (target) forceDeleteCategory(id, false, target.trim());
+        }
+      });
+    }
+    showConfirm(
+      t('confirm.deleteCat'),
+      '"' + name + '"' + t('confirm.deleteCatMsg') + count + t('confirm.deleteCatItems'),
+      buttons
+    );
+  } else {
+    showConfirm(
+      t('confirm.deleteCat'),
+      t('confirm.deleteCatEmpty') + name + '";',
+      [
+        { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); } },
+        { label: t('btn.delete'), cls: 'btn-danger', action: function() { forceDeleteCategory(id, false, null); } }
+      ]
+    );
+  }
+}
+
+async function forceDeleteCategory(id, deleteItems, reassignTo) {
+  closeModal('confirmModal');
+  showSpinner();
+  try {
+    var body = { action: 'deleteCategory', id: id, force: true };
+    if (deleteItems) body.deleteItems = true;
+    if (reassignTo) body.reassignTo = reassignTo;
+    await apiPost(body);
+    showToast(t('toast.catDeleted'));
+    await loadAll();
+    renderCatList();
+  } catch (err) {
+    showToast(t('toast.error') + err.message, true);
+  } finally { hideSpinner(); }
+}
+
+// ── Export / Import ────────────────────────────────────────
+
+async function exportData() {
+  showSpinner();
+  try {
+    var data = await apiGet({ action: 'exportAll' });
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'archeovault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(t('toast.exported'));
+  } catch (err) {
+    showToast(t('toast.errorExport') + err.message, true);
+  } finally { hideSpinner(); }
+}
+
+async function importData() {
+  var file = document.getElementById('importFile').files[0];
+  if (!file) return;
+
+  showConfirm(
+    t('confirm.importTitle'),
+    t('confirm.importMsg'),
+    [
+      { label: t('btn.cancel'), cls: 'btn-outline', action: function() { closeModal('confirmModal'); document.getElementById('importFile').value = ''; } },
+      { label: t('btn.import'), cls: 'btn-danger', action: async function() {
+        closeModal('confirmModal');
+        showSpinner();
+        try {
+          var text = await file.text();
+          var data = JSON.parse(text);
+          await apiPost({ action: 'importAll', categories: data.categories, items: data.items });
+          showToast(t('toast.imported'));
+          closeModal('exportModal');
+          await loadAll();
+        } catch (err) {
+          showToast(t('toast.errorImport') + err.message, true);
+        } finally {
+          hideSpinner();
+          document.getElementById('importFile').value = '';
+        }
+      }}
+    ]
+  );
+}
+
+// ── Confirm Dialog ─────────────────────────────────────────
+
+function showConfirm(title, message, buttons) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmFooter').innerHTML = buttons.map(function(b, i) {
+    return '<button class="btn ' + b.cls + '" id="confirmBtn' + i + '">' + b.label + '</button>';
+  }).join('');
+  buttons.forEach(function(b, i) {
+    document.getElementById('confirmBtn' + i).onclick = b.action;
+  });
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+// ── Modal Helpers ──────────────────────────────────────────
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function openExportModal() {
+  document.getElementById('exportModal').classList.add('active');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ── Search ─────────────────────────────────────────────────
+
+var searchTimeout;
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(renderItems, 200);
+});
+
+// ── Init ───────────────────────────────────────────────────
+
+// Restore language preference
+var urlLang = new URLSearchParams(window.location.search).get('lang');
+if (urlLang && (urlLang === 'el' || urlLang === 'en')) {
+  currentLang = urlLang;
+  localStorage.setItem('archeovault_lang', urlLang);
+} else {
+  var savedLang = localStorage.getItem('archeovault_lang');
+  if (savedLang && (savedLang === 'el' || savedLang === 'en')) {
+    currentLang = savedLang;
+  }
+}
+
+// ── Splash Screen Logic ───────────────────────────────────
+function initSplashParticles() {
+  var container = document.getElementById('splashParticles');
+  if (!container) return;
+  for (var i = 0; i < 20; i++) {
+    var p = document.createElement('div');
+    p.className = 'splash-particle';
+    p.style.left = (Math.random() * 100) + '%';
+    p.style.top = (40 + Math.random() * 50) + '%';
+    p.style.animationDelay = (Math.random() * 4) + 's';
+    p.style.animationDuration = (3 + Math.random() * 3) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    container.appendChild(p);
+  }
+}
+
+var splashMinTime = Date.now() + 2500; // show splash for at least 2.5s (full animation)
+var splashDataReady = false;
+
+function dismissSplash() {
+  var splash = document.getElementById('splashScreen');
+  if (!splash || splash.classList.contains('fade-out')) return;
+  var remaining = splashMinTime - Date.now();
+  if (remaining > 0) {
+    setTimeout(dismissSplash, remaining);
+    return;
+  }
+  splash.classList.add('fade-out');
+  setTimeout(function() {
+    splash.style.display = 'none';
+    var tc = document.querySelector('meta[name="theme-color"]');
+    if (tc) tc.setAttribute('content', '#5c4033');
+  }, 700);
+}
+
+// Skip splash when returning from OAuth redirect
+if (didOAuthReturn) {
+  var splashEl = document.getElementById('splashScreen');
+  if (splashEl) splashEl.style.display = 'none';
+} else {
+  initSplashParticles();
+}
+
+// Ensure splash never stays forever
+setTimeout(dismissSplash, 8000);
+
+if (!API_URL || !GOOGLE_CLIENT_ID) {
+  document.getElementById('configBanner').textContent = t('config.banner');
+  document.getElementById('configBanner').style.display = '';
+}
+if (!API_URL) {
+  setTimeout(dismissSplash, 3000);
+}
+if (API_URL) {
+  loadTranslations().then(function() {
+    applyLanguage();
+    loadAll().then(dismissSplash);
+  });
+} else {
+  applyLanguage();
+  dismissSplash();
+}
+
+window.addEventListener('load', function() {
+  var restored = restoreAuthFromStorage();
+  if (GOOGLE_CLIENT_ID && !restored) initGoogleSignIn();
+  if (GOOGLE_CLIENT_ID && restored) {
+    try { initGoogleSignIn(); } catch(e) {}
+  }
+  // Seed translations sheet if editor and sheet is empty
+  if (restored && isEditorUser && API_URL) {
+    apiGet({ action: 'getTranslations' }).then(function(data) {
+      if (!data.translations || Object.keys(data.translations).length === 0) {
+        seedTranslations();
+      }
+    }).catch(function() {});
+  }
+
+  // ── PWA: Service worker ──────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(function() {});
+  }
+});
+</script>
+</body>
+</html>
