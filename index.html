@@ -1274,8 +1274,7 @@ function initGoogleSignIn() {
 }
 
 function startPWAOAuthFlow() {
-  // OAuth 2.0 implicit flow — works in standalone PWA because it's a full-page redirect
-  var redirectUri = window.location.href.split('?')[0].split('#')[0];
+  var redirectUri = window.location.origin;
   var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth' +
     '?client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID) +
     '&redirect_uri=' + encodeURIComponent(redirectUri) +
