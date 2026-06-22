@@ -2012,7 +2012,16 @@ function dismissSplash() {
   }, 700);
 }
 
-initSplashParticles();
+// Skip splash entirely on returning sessions (mobile redirect-back, refresh)
+var hasStoredAuth = !!localStorage.getItem('archeovault_auth');
+var hasSeenSplash = !!sessionStorage.getItem('archeovault_splash_shown');
+if (hasStoredAuth || hasSeenSplash) {
+  var splashEl = document.getElementById('splashScreen');
+  if (splashEl) splashEl.style.display = 'none';
+} else {
+  initSplashParticles();
+  sessionStorage.setItem('archeovault_splash_shown', '1');
+}
 
 // Ensure splash never stays forever
 setTimeout(dismissSplash, 6000);
@@ -2040,6 +2049,8 @@ window.addEventListener('load', function() {
   if (GOOGLE_CLIENT_ID && restored) {
     try { initGoogleSignIn(); } catch(e) {}
   }
+  // Dismiss splash once page is fully loaded (images, scripts, Google GSI)
+  dismissSplash();
 
   // Seed translations sheet if editor and sheet is empty
   if (restored && isEditorUser && API_URL) {
