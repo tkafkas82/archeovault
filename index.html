@@ -2068,10 +2068,9 @@ function dismissSplash() {
   }, 700);
 }
 
-// Skip splash on OAuth return or if user is already logged in
+// Skip splash only when returning from OAuth redirect
 var isOAuthReturn = window.location.hash.indexOf('id_token=') !== -1;
-var hasStoredAuth = !!localStorage.getItem('archeovault_auth');
-if (isOAuthReturn || hasStoredAuth) {
+if (isOAuthReturn) {
   var splashEl = document.getElementById('splashScreen');
   if (splashEl) splashEl.style.display = 'none';
 } else {
