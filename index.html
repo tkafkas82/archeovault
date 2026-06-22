@@ -507,20 +507,12 @@ body {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.splash-logo .arch-path path {
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  animation: drawSnake 1.6s ease-out forwards;
+.splash-logo .arch-path {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawArch 1.4s ease-out 0.3s forwards;
 }
-.splash-logo .arch-path path:nth-child(1) { animation-delay: 0.2s; }
-.splash-logo .arch-path path:nth-child(2) { animation-delay: 0.3s; }
-.splash-logo .arch-path path:nth-child(3) { animation-delay: 0.4s; }
-.splash-logo .arch-path path:nth-child(4) { animation-delay: 0.25s; }
-.splash-logo .arch-path path:nth-child(5) { animation-delay: 0.35s; }
-.splash-logo .arch-path path:nth-child(6) { animation-delay: 0.45s; }
-.splash-logo .arch-path path:nth-child(7) { animation-delay: 0.15s; }
-.splash-logo .arch-path path:nth-child(8) { animation-delay: 0.1s; }
-@keyframes drawSnake {
+@keyframes drawArch {
   to { stroke-dashoffset: 0; }
 }
 
@@ -534,11 +526,12 @@ body {
 }
 
 .splash-logo .ground-line {
-  opacity: 0;
-  animation: fadeInBorder 1s ease-out 1.4s forwards;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: drawGround 0.6s ease-out 1.2s forwards;
 }
-@keyframes fadeInBorder {
-  to { opacity: 0.4; }
+@keyframes drawGround {
+  to { stroke-dashoffset: 0; }
 }
 
 .splash-title {
@@ -707,84 +700,25 @@ const GOOGLE_CLIENT_ID = '448369512713-56b0gb2dvqedaknlgm9san065d4ogtk4.apps.goo
           <stop offset="0%" stop-color="#6b4a30"/>
           <stop offset="100%" stop-color="#4a3020"/>
         </linearGradient>
-        <linearGradient id="splashGold" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="splashArch" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#e8c9a0"/>
           <stop offset="100%" stop-color="#d4a86a"/>
         </linearGradient>
+        <linearGradient id="splashAmph" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c0392b"/>
+          <stop offset="100%" stop-color="#96281b"/>
+        </linearGradient>
       </defs>
       <circle cx="256" cy="256" r="240" fill="url(#splashBg)"/>
-
-      <!-- Snake hair — elegant flowing S-curves, all gold line art -->
-      <g class="arch-path" fill="none" stroke="url(#splashGold)" stroke-width="5" stroke-linecap="round">
-        <!-- Left flowing snakes -->
-        <path d="M200 155 Q170 130 145 150 Q115 175 105 210 Q95 250 80 270 Q65 290 60 330"/>
-        <path d="M190 148 Q155 115 135 135 Q110 160 95 200 Q80 245 60 265 Q45 285 50 335"/>
-        <path d="M215 160 Q190 140 170 165 Q145 195 130 230 Q115 270 95 295 Q80 315 75 355"/>
-        <!-- Right flowing snakes (mirrored) -->
-        <path d="M312 155 Q342 130 367 150 Q397 175 407 210 Q417 250 432 270 Q447 290 452 330"/>
-        <path d="M322 148 Q357 115 377 135 Q402 160 417 200 Q432 245 452 265 Q467 285 462 335"/>
-        <path d="M297 160 Q322 140 342 165 Q367 195 382 230 Q397 270 417 295 Q432 315 437 355"/>
-        <!-- Top crown snakes -->
-        <path d="M226 140 Q218 100 228 70 Q240 42 256 38 Q272 42 284 70 Q294 100 286 140"/>
-        <path d="M210 145 Q195 90 215 50 Q235 20 256 18 Q277 20 297 50 Q317 90 302 145"/>
+      <path class="arch-path" d="M120 400 L120 220 Q120 120 256 100 Q392 120 392 220 L392 400" fill="none" stroke="url(#splashArch)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+      <g class="amphora-body">
+        <polygon points="256,88 240,120 272,120" fill="#e8c9a0"/>
+        <path d="M232 190 Q220 190 218 200 L218 210 Q210 212 210 220 L210 228 Q218 230 220 230 L214 310 Q212 340 230 355 L226 370 Q222 380 232 385 L280 385 Q290 380 286 370 L282 355 Q300 340 298 310 L292 230 Q294 230 302 228 L302 220 Q302 212 294 210 L294 200 Q292 190 280 190 Z" fill="url(#splashAmph)" opacity="0.95"/>
+        <ellipse cx="250" cy="300" rx="14" ry="35" fill="#d44" opacity="0.3"/>
+        <path d="M220 210 Q196 230 210 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M292 210 Q316 230 302 260" fill="none" stroke="url(#splashAmph)" stroke-width="10" stroke-linecap="round"/>
       </g>
-
-      <!-- Snake heads — small forked tongues at tips -->
-      <g class="amphora-body" stroke="url(#splashGold)" stroke-width="2.5" stroke-linecap="round" fill="none">
-        <path d="M60 330 L52 340 M60 330 L58 342"/>
-        <path d="M50 335 L40 343 M50 335 L44 347"/>
-        <path d="M75 355 L65 363 M75 355 L69 367"/>
-        <path d="M452 330 L460 340 M452 330 L454 342"/>
-        <path d="M462 335 L472 343 M462 335 L468 347"/>
-        <path d="M437 355 L447 363 M437 355 L443 367"/>
-        <path d="M256 18 L252 8 M256 18 L260 8"/>
-        <path d="M256 38 L252 28 M256 38 L260 28"/>
-      </g>
-
-      <!-- Face — classical gorgoneion, all gold line art on dark background -->
-      <g class="amphora-body" fill="none" stroke="#e8c9a0" stroke-linecap="round" stroke-linejoin="round">
-        <!-- Face outline -->
-        <path d="M200 200 Q200 160 230 150 Q256 142 282 150 Q312 160 312 200 L315 260 Q312 310 290 335 Q270 355 256 360 Q242 355 222 335 Q200 310 197 260 Z" fill="#5a3d28" stroke-width="3"/>
-
-        <!-- Eyes — almond-shaped, intense -->
-        <path d="M210 220 Q220 208 237 210 Q248 212 248 220 Q248 228 237 232 Q220 234 210 220 Z" fill="#e8c9a0" stroke="none"/>
-        <ellipse cx="230" cy="220" rx="6" ry="7" fill="#2c1810"/>
-        <circle cx="232" cy="218" r="2" fill="#e8c9a0" opacity="0.7"/>
-
-        <path d="M302 220 Q292 208 275 210 Q264 212 264 220 Q264 228 275 232 Q292 234 302 220 Z" fill="#e8c9a0" stroke="none"/>
-        <ellipse cx="282" cy="220" rx="6" ry="7" fill="#2c1810"/>
-        <circle cx="284" cy="218" r="2" fill="#e8c9a0" opacity="0.7"/>
-
-        <!-- Brows — strong arched -->
-        <path d="M206 206 Q222 192 250 200" stroke="#e8c9a0" stroke-width="3"/>
-        <path d="M306 206 Q290 192 262 200" stroke="#e8c9a0" stroke-width="3"/>
-
-        <!-- Nose — refined classical -->
-        <path d="M256 210 L256 260 Q250 270 248 268" stroke="#d4a86a" stroke-width="2.5"/>
-        <path d="M256 260 Q262 270 264 268" stroke="#d4a86a" stroke-width="2.5"/>
-
-        <!-- Lips — full, slightly parted, archaic smile -->
-        <path d="M235 290 Q245 282 256 283 Q267 282 277 290" stroke="#d4a86a" stroke-width="2.5"/>
-        <path d="M238 290 Q248 298 256 297 Q264 298 274 290" stroke="#d4a86a" stroke-width="2"/>
-
-        <!-- Chin definition -->
-        <path d="M240 330 Q256 345 272 330" stroke="#d4a86a" stroke-width="1.5" opacity="0.5"/>
-
-        <!-- Cheekbones -->
-        <path d="M200 245 Q208 235 215 240" stroke="#d4a86a" stroke-width="1.5" opacity="0.4"/>
-        <path d="M312 245 Q304 235 297 240" stroke="#d4a86a" stroke-width="1.5" opacity="0.4"/>
-
-        <!-- Forehead diadem -->
-        <path d="M210 175 Q232 162 256 165 Q280 162 302 175" stroke="#e8c9a0" stroke-width="3"/>
-        <path d="M225 172 L256 158 L287 172" fill="none" stroke="#e8c9a0" stroke-width="2"/>
-        <circle cx="256" cy="158" r="5" fill="#e8c9a0"/>
-        <circle cx="236" cy="168" r="3" fill="#d4a86a"/>
-        <circle cx="276" cy="168" r="3" fill="#d4a86a"/>
-      </g>
-
-      <!-- Outer ring — Greek key pattern feel -->
-      <circle class="ground-line" cx="256" cy="256" r="235" fill="none" stroke="#e8c9a0" stroke-width="2.5" opacity="0.3"/>
-      <circle class="ground-line" cx="256" cy="256" r="230" fill="none" stroke="#e8c9a0" stroke-width="1" opacity="0.2"/>
+      <line class="ground-line" x1="100" y1="400" x2="412" y2="400" stroke="#e8c9a0" stroke-width="12" stroke-linecap="round"/>
     </svg>
     <div class="splash-title">ArcheoVault</div>
     <div class="splash-subtitle">Θησαυροί του Χρόνου</div>
