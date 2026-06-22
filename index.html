@@ -1302,7 +1302,7 @@ function handleOAuthRedirect() {
 }
 
 // Process OAuth redirect before anything else
-handleOAuthRedirect();
+var didOAuthReturn = handleOAuthRedirect();
 
 // ── Category Tree Helpers ─────────────────────────────────
 
@@ -2068,9 +2068,8 @@ function dismissSplash() {
   }, 700);
 }
 
-// Skip splash only when returning from OAuth redirect
-var isOAuthReturn = window.location.hash.indexOf('id_token=') !== -1;
-if (isOAuthReturn) {
+// Skip splash when returning from OAuth redirect
+if (didOAuthReturn) {
   var splashEl = document.getElementById('splashScreen');
   if (splashEl) splashEl.style.display = 'none';
 } else {
