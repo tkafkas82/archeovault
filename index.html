@@ -1274,7 +1274,7 @@ function initGoogleSignIn() {
 }
 
 function startPWAOAuthFlow() {
-  var redirectUri = window.location.origin;
+  var redirectUri = window.location.origin + '/';
   var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth' +
     '?client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID) +
     '&redirect_uri=' + encodeURIComponent(redirectUri) +
@@ -2057,14 +2057,7 @@ function dismissSplash() {
   }, 700);
 }
 
-// Skip splash only when returning from OAuth redirect (id_token in hash)
-var isOAuthReturn = window.location.hash.indexOf('id_token=') !== -1;
-if (isOAuthReturn) {
-  var splashEl = document.getElementById('splashScreen');
-  if (splashEl) splashEl.style.display = 'none';
-} else {
-  initSplashParticles();
-}
+initSplashParticles();
 
 // Ensure splash never stays forever
 setTimeout(dismissSplash, 6000);
